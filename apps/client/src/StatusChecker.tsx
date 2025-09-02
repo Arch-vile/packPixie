@@ -11,7 +11,7 @@ export default function StatusChecker() {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:3000/api/status');
+      const response = await fetch('http://localhost:3001/api/status');
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
