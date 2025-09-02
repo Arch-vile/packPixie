@@ -37,6 +37,9 @@ FROM nginx:alpine AS production
 # Install node for API
 RUN apk add --no-cache nodejs npm
 
+# Install pnpm globally
+RUN npm install -g pnpm@10.12.1
+
 # Create app user
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nodejs -u 1001
@@ -44,10 +47,19 @@ RUN adduser -S nodejs -u 1001
 # Set up directories
 WORKDIR /app
 
+# Copy package manager files for dependency installation
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY apps/api/package.json ./apps/api/
+COPY packages/model/package.json ./packages/model/
+
+# Copy built model package
+COPY --from=builder --chown=nodejs:nodejs /app/packages/model ./packages/model
+
+# Install production dependencies
+RUN pnpm install --frozen-lockfile --filter=api --prod
+
 # Copy built API
-COPY --from=builder --chown=nodejs:nodejs /app/apps/api/dist ./api/dist
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./api/node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/apps/api/package.json ./api/package.json
+COPY --from=builder --chown=nodejs:nodejs /app/apps/api/dist ./apps/api/dist
 
 # Copy built client to nginx html directory
 COPY --from=builder /app/apps/client/dist /usr/share/nginx/html
@@ -88,7 +100,7 @@ RUN echo '#!/bin/sh' > /start.sh && \
     echo 'set -e' >> /start.sh && \
     echo '' >> /start.sh && \
     echo '# Start API in background' >> /start.sh && \
-    echo 'cd /app/api && node dist/index.js &' >> /start.sh && \
+    echo 'cd /app/apps/api && node dist/index.js &' >> /start.sh && \
     echo '' >> /start.sh && \
     echo '# Start nginx in foreground' >> /start.sh && \
     echo 'nginx -g "daemon off;"' >> /start.sh
