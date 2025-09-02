@@ -9,12 +9,16 @@
     "dev": "tsc --watch",
     "clean": "rm -rf dist"
   },
-  "keywords": ["typescript", "models", "shared"],
+  "keywords": [
+    "typescript",
+    "models",
+    "shared"
+  ],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.12.1",
   "devDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.9.2"
   },
   "files": [
     "dist"
