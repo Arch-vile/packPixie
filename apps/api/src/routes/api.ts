@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+import { StatusResponse } from '@packpixie/model';
 
 export default async function apiRoutes(fastify: FastifyInstance) {
   // Register API routes with /api prefix
@@ -8,13 +9,16 @@ export default async function apiRoutes(fastify: FastifyInstance) {
         return { message: 'Hello from PackPixie API!' };
       });
 
-      fastify.get('/status', async (request, reply) => {
-        return {
-          status: 'running',
-          version: '1.0.0',
-          timestamp: new Date().toISOString(),
-        };
-      });
+      fastify.get(
+        '/status',
+        async (request, reply): Promise<StatusResponse> => {
+          return {
+            status: 'running',
+            version: '1.0.0',
+            timestamp: new Date().toISOString(),
+          };
+        }
+      );
     },
     { prefix: '/api' }
   );

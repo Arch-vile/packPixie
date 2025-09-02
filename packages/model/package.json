@@ -9,11 +9,7 @@
     "dev": "tsc --watch",
     "clean": "rm -rf dist"
   },
-  "keywords": [
-    "typescript",
-    "models",
-    "shared"
-  ],
+  "keywords": ["typescript", "models", "shared"],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.12.1",

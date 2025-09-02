@@ -22,7 +22,8 @@
     "fastify": "^4.24.3",
     "@fastify/cors": "^9.0.1",
     "@fastify/helmet": "^11.1.1",
-    "@fastify/sensible": "^5.5.0"
+    "@fastify/sensible": "^5.5.0",
+    "@packpixie/model": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.8.0",

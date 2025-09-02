@@ -1,10 +1,5 @@
 import { useState } from 'react';
-
-interface StatusResponse {
-  status: string;
-  version: string;
-  timestamp: string;
-}
+import type { StatusResponse } from '@packpixie/model';
 
 export default function StatusChecker() {
   const [statusData, setStatusData] = useState<StatusResponse | null>(null);
