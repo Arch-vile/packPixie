@@ -29,6 +29,9 @@ COPY turbo.json ./
 
 # Build both applications
 RUN pnpm build --filter=api
+
+# Set environment variable to indicate running in Docker
+ENV VITE_RUNNING_IN_DOCKER=true
 RUN pnpm build --filter=packpixie
 
 # Production stage with nginx
