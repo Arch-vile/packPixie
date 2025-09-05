@@ -98,18 +98,6 @@ RUN echo 'server { \
     } \
 }' > /etc/nginx/conf.d/default.conf
 
-# Create startup script
-RUN echo '#!/bin/sh' > /start.sh && \
-    echo 'set -e' >> /start.sh && \
-    echo '' >> /start.sh && \
-    echo '# Start API in background' >> /start.sh && \
-    echo 'cd /app/apps/api && node dist/index.js &' >> /start.sh && \
-    echo '' >> /start.sh && \
-    echo '# Start nginx in foreground' >> /start.sh && \
-    echo 'nginx -g "daemon off;"' >> /start.sh
-
-RUN chmod +x /start.sh
-
 # Expose port 80
 EXPOSE 80
 
@@ -117,5 +105,5 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost/health || exit 1
 
-# Start both services
-CMD ["/start.sh"]
+# Start both services - API in background, nginx in foreground
+CMD sh -c "cd /app/apps/api && node dist/index.js & nginx -g 'daemon off;'"
