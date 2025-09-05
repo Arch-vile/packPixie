@@ -62,3 +62,42 @@ aws dynamodb create-table \
   --key-schema AttributeName=LockID,KeyType=HASH \
   --billing-mode PAY_PER_REQUEST
 ```
+
+## Setting up infra
+
+Run the commands in the `infra` folder.
+
+Setup Terraform:
+
+```bash
+terraform init -reconfigure -backend-config=backend.hcl
+```
+
+Create infra:
+
+```bash
+terraform apply
+```
+
+## Setting up Github
+
+We'll need to setup AWS secrets in Github in order for our Github actions to be able to deploy our application.
+
+In the `infra` folder run these to get the secrets:
+
+```bash
+terraform output s3_bucket_name
+terraform output github_actions_access_key_id
+terraform output -raw github_actions_secret_access_key
+```
+
+### Add Secrets to GitHub
+
+Set the required secrets to Github:
+
+1. Go to your GitHub repository
+1. Navigate to Settings → Secrets and variables → Actions
+1. Add these repository secrets:
+   AWS_ACCESS_KEY_ID - Use the value from terraform output github_actions_access_key_id
+   AWS_SECRET_ACCESS_KEY - Use the value from terraform output github_actions_secret_access_key
+   S3_BUCKET_NAME - Use the value from terraform output s3_bucket_name
