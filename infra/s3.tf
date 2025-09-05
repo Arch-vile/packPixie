@@ -9,6 +9,53 @@ resource "random_string" "bucket_suffix" {
   upper   = false
 }
 
+# IAM user for GitHub Actions deployment
+resource "aws_iam_user" "github_actions_deploy" {
+  name = "github-actions-deploy-${random_string.bucket_suffix.result}"
+  path = "/"
+
+  tags = {
+    Description = "IAM user for GitHub Actions to deploy client app to S3"
+  }
+}
+
+# IAM policy for S3 deployment permissions
+resource "aws_iam_policy" "github_actions_s3_deploy" {
+  name        = "github-actions-s3-deploy-${random_string.bucket_suffix.result}"
+  description = "Policy for GitHub Actions to deploy to S3 bucket"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:PutObjectAcl",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          aws_s3_bucket.client_app.arn,
+          "${aws_s3_bucket.client_app.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+# Attach policy to user
+resource "aws_iam_user_policy_attachment" "github_actions_deploy" {
+  user       = aws_iam_user.github_actions_deploy.name
+  policy_arn = aws_iam_policy.github_actions_s3_deploy.arn
+}
+
+# Create access key for the user
+resource "aws_iam_access_key" "github_actions_deploy" {
+  user = aws_iam_user.github_actions_deploy.name
+}
+
 # Enable versioning
 resource "aws_s3_bucket_versioning" "client_app" {
   bucket = aws_s3_bucket.client_app.id
