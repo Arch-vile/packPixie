@@ -14,6 +14,27 @@ output "s3_website_domain" {
   value       = aws_s3_bucket_website_configuration.client_app.website_domain
 }
 
+# Lambda and API Gateway outputs
+output "api_gateway_url" {
+  description = "API Gateway endpoint URL"
+  value       = aws_apigatewayv2_stage.api.invoke_url
+}
+
+output "lambda_function_name" {
+  description = "Name of the Lambda function"
+  value       = aws_lambda_function.api.function_name
+}
+
+output "lambda_function_arn" {
+  description = "ARN of the Lambda function"
+  value       = aws_lambda_function.api.arn
+}
+
+output "lambda_deployment_bucket" {
+  description = "S3 bucket for Lambda deployments"
+  value       = aws_s3_bucket.lambda_deployments.id
+}
+
 # GitHub Actions IAM user outputs
 output "github_actions_access_key_id" {
   description = "Access key ID for GitHub Actions deployment user"
