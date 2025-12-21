@@ -46,3 +46,13 @@ output "github_actions_secret_access_key" {
   value       = aws_iam_access_key.github_actions_deploy.secret
   sensitive   = true
 }
+
+output "random_suffix" {
+  description = "Random suffix used for resource naming"
+  value       = random_string.bucket_suffix.result
+}
+
+output "aws_region" {
+  description = "AWS region where resources are deployed"
+  value       = var.aws_region
+}
