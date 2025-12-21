@@ -1,14 +1,29 @@
 # Infra
 
-## Setting up s3 bucket for Terraform state
+## Installing tools
 
-Manual step needed as Terraform cannot run any actions without a state storage.
+Install Terraform
 
-Setting up account config:
+```bash
+brew tap hashicorp/tap
+brew install hashicorp/tap/terraform
+```
+
+Install aws command line tools:
+
+```
+brew install awscli
+```
+
+and configure:
 
 ```bash
 aws configure
 ```
+
+## Setting up s3 bucket for Terraform state
+
+Manual step needed as Terraform cannot run any actions without a state storage.
 
 Creating the bucket:
 
