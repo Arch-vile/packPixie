@@ -11,11 +11,7 @@ export default function StatusChecker() {
     setError(null);
 
     try {
-      const isRunningInDocker =
-        import.meta.env.VITE_RUNNING_IN_DOCKER === 'true';
-      const apiBaseUrl = isRunningInDocker
-        ? '' // Use relative URL in Docker since nginx proxies API requests
-        : 'http://localhost:3001';
+      const apiBaseUrl = 'http://localhost:3001';
       const response = await fetch(`${apiBaseUrl}/api/status`);
 
       if (!response.ok) {
