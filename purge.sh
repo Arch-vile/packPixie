@@ -13,6 +13,7 @@ remove_dirs_by_name() {
 
     echo "Cleaning workspace (node_modules, build, .turbo)..."
     remove_dirs_by_name node_modules
+    remove_dirs_by_name dist
     remove_dirs_by_name build
     remove_dirs_by_name .turbo
     rm -rf node_modules .turbo

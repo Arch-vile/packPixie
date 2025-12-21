@@ -27,7 +27,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build API
-        run: pnpm --filter api run build
+        run: pnpm turbo run build --filter=api
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
