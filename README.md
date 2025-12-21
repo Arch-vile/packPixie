@@ -17,3 +17,9 @@ To print the UI URL:
 ```bash
 terraform output s3_website_endpoint
 ```
+
+To print the API URL:
+
+```bash
+terraform output api_gateway_ur
+```
