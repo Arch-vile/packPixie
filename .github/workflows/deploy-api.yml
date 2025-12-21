@@ -55,7 +55,7 @@ jobs:
 
           # Install production dependencies
           cd .deploy-build
-          npm install --production --omit=dev
+          pnpm install --production --omit=dev
 
       - name: Smoke test - Start built API
         run: |
