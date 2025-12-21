@@ -140,3 +140,4 @@ vite.config.ts.timestamp-*
 .turbo
 infra/.terraform
 .DS_Store
+infra/placeholder.zip
