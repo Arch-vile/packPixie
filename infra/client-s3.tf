@@ -1,3 +1,6 @@
+# Data source to get current AWS account ID
+data "aws_caller_identity" "current" {}
+
 # S3 bucket for hosting the client application
 resource "aws_s3_bucket" "client_app" {
   bucket = "pack-pixie-client-app-${random_string.bucket_suffix.result}"
@@ -40,6 +43,13 @@ resource "aws_iam_policy" "github_actions_s3_deploy" {
           aws_s3_bucket.client_app.arn,
           "${aws_s3_bucket.client_app.arn}/*"
         ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:pack-pixie/*"
       }
     ]
   })
