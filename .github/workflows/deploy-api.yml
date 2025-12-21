@@ -1,0 +1,102 @@
+name: Deploy API to AWS Lambda
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.19.0'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build API
+        run: pnpm --filter api run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Get Lambda function name and bucket
+        id: lambda-config
+        run: |
+          cd infra
+          BUCKET_SUFFIX=$(terraform output -raw random_suffix)
+          LAMBDA_BUCKET="pack-pixie-lambda-deployments-${BUCKET_SUFFIX}"
+          LAMBDA_FUNCTION="pack-pixie-api-${BUCKET_SUFFIX}"
+          echo "bucket=${LAMBDA_BUCKET}" >> $GITHUB_OUTPUT
+          echo "function=${LAMBDA_FUNCTION}" >> $GITHUB_OUTPUT
+        env:
+          AWS_DEFAULT_REGION: us-east-1
+
+      - name: Prepare deployment package
+        run: |
+          # Create build directory
+          mkdir -p .deploy-build
+
+          # Copy built files and package.json
+          cp -r apps/api/dist/* .deploy-build/
+          cp apps/api/package.json .deploy-build/
+
+          # Install production dependencies
+          cd .deploy-build
+          npm install --production --omit=dev
+
+      - name: Create deployment package
+        run: |
+          cd .deploy-build
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          ZIP_FILE="lambda-deployment-${TIMESTAMP}.zip"
+          zip -r -q "$ZIP_FILE" . -x "*.git*"
+          echo "ZIP_FILE=${ZIP_FILE}" >> $GITHUB_ENV
+          echo "📦 Created deployment package: $ZIP_FILE ($(du -h "$ZIP_FILE" | cut -f1))"
+
+      - name: Upload to S3
+        run: |
+          aws s3 cp .deploy-build/${{ env.ZIP_FILE }} s3://${{ steps.lambda-config.outputs.bucket }}/${{ env.ZIP_FILE }}
+          echo "☁️ Uploaded to S3"
+
+      - name: Update Lambda function
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ steps.lambda-config.outputs.function }} \
+            --s3-bucket ${{ steps.lambda-config.outputs.bucket }} \
+            --s3-key ${{ env.ZIP_FILE }} \
+            --publish
+
+      - name: Wait for Lambda to be ready
+        run: |
+          aws lambda wait function-updated \
+            --function-name ${{ steps.lambda-config.outputs.function }}
+          echo "✅ Lambda function updated successfully!"
+
+      - name: Get API Gateway URL
+        run: |
+          cd infra
+          API_URL=$(terraform output -raw api_gateway_url 2>/dev/null || echo "")
+          if [ -n "$API_URL" ]; then
+            echo "🌐 API Gateway URL: ${API_URL}"
+            echo "Testing endpoints:"
+            echo "  Health: ${API_URL}/health"
+            echo "  Status: ${API_URL}/api/status"
+            echo "  Hello:  ${API_URL}/api/hello"
+          fi
