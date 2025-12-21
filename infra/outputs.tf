@@ -56,3 +56,14 @@ output "aws_region" {
   description = "AWS region where resources are deployed"
   value       = var.aws_region
 }
+
+# Secrets Manager outputs
+output "s3_bucket_secret_arn" {
+  description = "ARN of the Secrets Manager secret containing the S3 bucket name"
+  value       = aws_secretsmanager_secret.s3_bucket_client.arn
+}
+
+output "s3_bucket_secret_name" {
+  description = "Name of the Secrets Manager secret containing the S3 bucket name"
+  value       = aws_secretsmanager_secret.s3_bucket_client.name
+}

@@ -36,7 +36,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      - name: Get S3 bucket name from AWS Secrets Manager
+        id: get-bucket
+        run: |
+          BUCKET_NAME=$(aws secretsmanager get-secret-value --secret-id pack-pixie/s3-bucket-client --query SecretString --output text)
+          echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
+
       - name: Deploy to S3
         run: |
-          aws s3 sync apps/client/dist/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
-          aws s3 cp apps/client/dist/index.html s3://${{ secrets.S3_BUCKET_NAME }}/index.html --cache-control "no-cache"
+          aws s3 sync apps/client/dist/ s3://${{ steps.get-bucket.outputs.bucket_name }} --delete
+          aws s3 cp apps/client/dist/index.html s3://${{ steps.get-bucket.outputs.bucket_name }}/index.html --cache-control "no-cache"

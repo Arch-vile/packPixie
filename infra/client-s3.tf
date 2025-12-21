@@ -148,3 +148,19 @@ resource "aws_s3_bucket_lifecycle_configuration" "client_app" {
     }
   }
 }
+
+# AWS Secrets Manager secret for S3 bucket name
+resource "aws_secretsmanager_secret" "s3_bucket_client" {
+  name        = "pack-pixie/s3-bucket-client"
+  description = "S3 bucket name for Pack Pixie client app"
+
+  tags = {
+    Application = "PackPixie"
+    ManagedBy   = "Terraform"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "s3_bucket_client" {
+  secret_id     = aws_secretsmanager_secret.s3_bucket_client.id
+  secret_string = aws_s3_bucket.client_app.id
+}
