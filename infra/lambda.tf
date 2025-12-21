@@ -79,7 +79,7 @@ resource "aws_lambda_function" "api" {
   function_name = "pack-pixie-api-${random_string.bucket_suffix.result}"
   role          = aws_iam_role.lambda_execution_role.arn
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 30
   memory_size   = 256
 
