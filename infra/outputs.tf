@@ -67,3 +67,34 @@ output "s3_bucket_secret_name" {
   description = "Name of the Secrets Manager secret containing the S3 bucket name"
   value       = aws_secretsmanager_secret.s3_bucket_client.name
 }
+
+# Lambda Secrets Manager outputs
+output "lambda_bucket_secret_arn" {
+  description = "ARN of the Secrets Manager secret containing the Lambda deployment bucket name"
+  value       = aws_secretsmanager_secret.lambda_bucket.arn
+}
+
+output "lambda_bucket_secret_name" {
+  description = "Name of the Secrets Manager secret containing the Lambda deployment bucket name"
+  value       = aws_secretsmanager_secret.lambda_bucket.name
+}
+
+output "lambda_function_secret_arn" {
+  description = "ARN of the Secrets Manager secret containing the Lambda function name"
+  value       = aws_secretsmanager_secret.lambda_function.arn
+}
+
+output "lambda_function_secret_name" {
+  description = "Name of the Secrets Manager secret containing the Lambda function name"
+  value       = aws_secretsmanager_secret.lambda_function.name
+}
+
+output "api_gateway_url_secret_arn" {
+  description = "ARN of the Secrets Manager secret containing the API Gateway URL"
+  value       = aws_secretsmanager_secret.api_gateway_url.arn
+}
+
+output "api_gateway_url_secret_name" {
+  description = "Name of the Secrets Manager secret containing the API Gateway URL"
+  value       = aws_secretsmanager_secret.api_gateway_url.name
+}

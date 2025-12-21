@@ -36,17 +36,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Get Lambda function name and bucket
+      - name: Get Lambda configuration from AWS Secrets Manager
         id: lambda-config
         run: |
-          cd infra
-          BUCKET_SUFFIX=$(terraform output -raw random_suffix)
-          LAMBDA_BUCKET="pack-pixie-lambda-deployments-${BUCKET_SUFFIX}"
-          LAMBDA_FUNCTION="pack-pixie-api-${BUCKET_SUFFIX}"
+          LAMBDA_BUCKET=$(aws secretsmanager get-secret-value --secret-id pack-pixie/lambda-bucket --query SecretString --output text)
+          LAMBDA_FUNCTION=$(aws secretsmanager get-secret-value --secret-id pack-pixie/lambda-function --query SecretString --output text)
           echo "bucket=${LAMBDA_BUCKET}" >> $GITHUB_OUTPUT
           echo "function=${LAMBDA_FUNCTION}" >> $GITHUB_OUTPUT
-        env:
-          AWS_DEFAULT_REGION: us-east-1
 
       - name: Prepare deployment package
         run: |
@@ -111,10 +107,9 @@ jobs:
             --function-name ${{ steps.lambda-config.outputs.function }}
           echo "✅ Lambda function updated successfully!"
 
-      - name: Get API Gateway URL
+      - name: Get API Gateway URL from AWS Secrets Manager
         run: |
-          cd infra
-          API_URL=$(terraform output -raw api_gateway_url 2>/dev/null || echo "")
+          API_URL=$(aws secretsmanager get-secret-value --secret-id pack-pixie/api-gateway-url --query SecretString --output text 2>/dev/null || echo "")
           if [ -n "$API_URL" ]; then
             echo "🌐 API Gateway URL: ${API_URL}"
             echo "Testing endpoints:"

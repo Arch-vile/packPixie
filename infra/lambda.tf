@@ -227,3 +227,48 @@ resource "aws_iam_user_policy_attachment" "github_actions_lambda_deploy" {
   user       = aws_iam_user.github_actions_deploy.name
   policy_arn = aws_iam_policy.github_actions_lambda_deploy.arn
 }
+# AWS Secrets Manager secrets for Lambda configuration
+resource "aws_secretsmanager_secret" "lambda_bucket" {
+  name        = "pack-pixie/lambda-bucket"
+  description = "S3 bucket name for Pack Pixie Lambda deployments"
+
+  tags = {
+    Application = "PackPixie"
+    ManagedBy   = "Terraform"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "lambda_bucket" {
+  secret_id     = aws_secretsmanager_secret.lambda_bucket.id
+  secret_string = aws_s3_bucket.lambda_deployments.id
+}
+
+resource "aws_secretsmanager_secret" "lambda_function" {
+  name        = "pack-pixie/lambda-function"
+  description = "Lambda function name for Pack Pixie API"
+
+  tags = {
+    Application = "PackPixie"
+    ManagedBy   = "Terraform"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "lambda_function" {
+  secret_id     = aws_secretsmanager_secret.lambda_function.id
+  secret_string = aws_lambda_function.api.function_name
+}
+
+resource "aws_secretsmanager_secret" "api_gateway_url" {
+  name        = "pack-pixie/api-gateway-url"
+  description = "API Gateway URL for Pack Pixie API"
+
+  tags = {
+    Application = "PackPixie"
+    ManagedBy   = "Terraform"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "api_gateway_url" {
+  secret_id     = aws_secretsmanager_secret.api_gateway_url.id
+  secret_string = aws_apigatewayv2_stage.api.invoke_url
+}
