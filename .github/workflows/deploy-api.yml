@@ -45,7 +45,6 @@ jobs:
         run: |
           cd ./api-deploy
           rm -rf ./src
-          rm -rf node_modules/.pnpm
           find . -name "*.ts" -type f -delete
           find . -name "*.map" -type f -delete
           echo "🧹 Cleaned up deployment directory"
