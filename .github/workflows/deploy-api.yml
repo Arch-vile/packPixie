@@ -71,12 +71,12 @@ jobs:
           kill $SERVER_PID 2>/dev/null || true
           exit 1
 
-      - name: Create deployment package
+      - name: Package deployment zip
         run: |
           cd ./api-deploy
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
           ZIP_FILE="lambda-deployment-${TIMESTAMP}.zip"
-          zip -r -q "$ZIP_FILE" . -x "*.git*"
+          zip -r -q "$ZIP_FILE" .
           echo "ZIP_FILE=${ZIP_FILE}" >> $GITHUB_ENV
           echo "📦 Created deployment package: $ZIP_FILE ($(du -h "$ZIP_FILE" | cut -f1))"
 
@@ -97,7 +97,7 @@ jobs:
 
       - name: Upload to S3
         run: |
-          aws s3 cp .deploy-build/${{ env.ZIP_FILE }} s3://${{ steps.lambda-config.outputs.bucket }}/${{ env.ZIP_FILE }}
+          aws s3 cp ./api-deploy/${{ env.ZIP_FILE }} s3://${{ steps.lambda-config.outputs.bucket }}/${{ env.ZIP_FILE }}
           echo "☁️ Uploaded to S3"
 
       - name: Update Lambda function
