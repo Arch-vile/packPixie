@@ -23,43 +23,36 @@ jobs:
         with:
           version: 10.12.1
 
+      - name: PNPM config
+        run: |
+          # Enable injecting workspace packages in pnpm, needed for pnpm deploy command
+          pnpm config set inject-workspace-packages=true --location project
+          # Hack to keep lock file check happy
+          yq -i '.settings.injectWorkspacePackages = true' pnpm-lock.yaml
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build API
-        run: pnpm turbo run build --filter=api
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Get Lambda configuration from AWS Secrets Manager
-        id: lambda-config
-        run: |
-          LAMBDA_BUCKET=$(aws secretsmanager get-secret-value --secret-id pack-pixie/lambda-bucket --query SecretString --output text)
-          LAMBDA_FUNCTION=$(aws secretsmanager get-secret-value --secret-id pack-pixie/lambda-function --query SecretString --output text)
-          echo "bucket=${LAMBDA_BUCKET}" >> $GITHUB_OUTPUT
-          echo "function=${LAMBDA_FUNCTION}" >> $GITHUB_OUTPUT
+        run: pnpm build --filter=api
 
       - name: Prepare deployment package
         run: |
           # Create build directory
-          mkdir -p .deploy-build
+          pnpm build --filter=api
+          pnpm --filter=api --prod deploy ./api-deploy
 
-          # Copy built files and package.json
-          cp -r apps/api/dist/* .deploy-build/
-          cp apps/api/package.json .deploy-build/
-
-          # Install production dependencies
-          cd .deploy-build
-          pnpm install --production
+      - name: Clean up deployment directory
+        run: |
+          cd ./api-deploy
+          rm -rf node_modules/.pnpm
+          find . -name "*.ts" -type f -delete
+          find . -name "*.map" -type f -delete
+          echo "🧹 Cleaned up deployment directory"
 
       - name: Smoke test - Start built API
         run: |
-          cd .deploy-build
+          cd ./api-deploy
           timeout 10s node index.js &
           SERVER_PID=$!
 
@@ -81,12 +74,27 @@ jobs:
 
       - name: Create deployment package
         run: |
-          cd .deploy-build
+          cd ./api-deploy
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
           ZIP_FILE="lambda-deployment-${TIMESTAMP}.zip"
           zip -r -q "$ZIP_FILE" . -x "*.git*"
           echo "ZIP_FILE=${ZIP_FILE}" >> $GITHUB_ENV
           echo "📦 Created deployment package: $ZIP_FILE ($(du -h "$ZIP_FILE" | cut -f1))"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Get Lambda configuration from AWS Secrets Manager
+        id: lambda-config
+        run: |
+          LAMBDA_BUCKET=$(aws secretsmanager get-secret-value --secret-id pack-pixie/lambda-bucket --query SecretString --output text)
+          LAMBDA_FUNCTION=$(aws secretsmanager get-secret-value --secret-id pack-pixie/lambda-function --query SecretString --output text)
+          echo "bucket=${LAMBDA_BUCKET}" >> $GITHUB_OUTPUT
+          echo "function=${LAMBDA_FUNCTION}" >> $GITHUB_OUTPUT
 
       - name: Upload to S3
         run: |
