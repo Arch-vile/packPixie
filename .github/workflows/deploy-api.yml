@@ -33,18 +33,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build API
-        run: pnpm build --filter=api
-
       - name: Prepare deployment package
         run: |
-          # Create build directory
           pnpm build --filter=api
           pnpm --filter=api --prod deploy ./api-deploy
+          cd ./api-deploy
+          mv ./dist/* .
+          rmdir ./dist
 
       - name: Clean up deployment directory
         run: |
           cd ./api-deploy
+          rm -rf ./src
           rm -rf node_modules/.pnpm
           find . -name "*.ts" -type f -delete
           find . -name "*.map" -type f -delete
