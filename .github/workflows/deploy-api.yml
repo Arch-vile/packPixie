@@ -13,6 +13,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Generate version
+        id: version
+        run: |
+          BASE_VERSION=$(node -p "require('./apps/api/package.json').version")
+          GIT_SHA_SHORT=$(git rev-parse --short HEAD)
+          APP_VERSION="${BASE_VERSION}-${GIT_SHA_SHORT}"
+          echo "version=${APP_VERSION}" >> $GITHUB_OUTPUT
+          echo "sha=${GIT_SHA_SHORT}" >> $GITHUB_OUTPUT
+          echo "📦 Version: ${APP_VERSION}"
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -35,11 +45,15 @@ jobs:
 
       - name: Prepare deployment package
         run: |
+          echo "Building with version: ${{ steps.version.outputs.version }}"
+          # Create version.json in the source before building
+          echo '{"version":"${{ steps.version.outputs.version }}"}' > ./apps/api/src/version.json
           pnpm build --filter=api
           pnpm --filter=api --prod deploy ./api-deploy
           cd ./api-deploy
           mv ./dist/* .
           rmdir ./dist
+          echo "✅ Version file created with: ${{ steps.version.outputs.version }}"
 
       - name: Clean up deployment directory
         run: |
@@ -59,6 +73,8 @@ jobs:
           echo "📦 Created deployment package: $ZIP_FILE ($(du -h "$ZIP_FILE" | cut -f1))"
 
       - name: Smoke test - Start built API from zip
+        env:
+          EXPECTED_VERSION: ${{ steps.version.outputs.version }}
         run: |
           cd ./api-deploy
 
@@ -136,6 +152,8 @@ jobs:
           fi
 
       - name: Verify deployment - Call status endpoint
+        env:
+          EXPECTED_VERSION: ${{ steps.version.outputs.version }}
         run: |
           if [ -z "${{ steps.api-url.outputs.api_url }}" ]; then
             echo "❌ API URL not found - cannot verify deployment"
@@ -143,17 +161,50 @@ jobs:
           fi
 
           echo "🔍 Testing status endpoint..."
-          RESPONSE=$(curl -s -w "\n%{http_code}" "${{ steps.api-url.outputs.api_url }}/api/status")
-          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-          BODY=$(echo "$RESPONSE" | head -n-1)
+          echo "Expected version: $EXPECTED_VERSION"
 
-          echo "HTTP Status: $HTTP_CODE"
-          echo "Response:"
-          echo "$BODY" | jq . || echo "$BODY"
+          # Retry logic for Lambda cold start
+          MAX_RETRIES=5
+          RETRY_DELAY=3
 
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "✅ Status endpoint verified successfully!"
-          else
-            echo "❌ Status endpoint returned HTTP $HTTP_CODE"
-            exit 1
-          fi
+          for attempt in $(seq 1 $MAX_RETRIES); do
+            echo "Attempt $attempt/$MAX_RETRIES..."
+            
+            RESPONSE=$(curl -s -w "\n%{http_code}" "${{ steps.api-url.outputs.api_url }}/api/status")
+            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+            BODY=$(echo "$RESPONSE" | head -n-1)
+
+            echo "HTTP Status: $HTTP_CODE"
+            echo "Response:"
+            echo "$BODY" | jq . || echo "$BODY"
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              # Verify version
+              ACTUAL_VERSION=$(echo "$BODY" | jq -r '.version')
+              echo "Actual version: $ACTUAL_VERSION"
+              
+              if [ "$ACTUAL_VERSION" = "$EXPECTED_VERSION" ]; then
+                echo "✅ Deployment verified! Version matches: $ACTUAL_VERSION"
+                exit 0
+              else
+                echo "❌ Version mismatch! Expected: $EXPECTED_VERSION, Got: $ACTUAL_VERSION"
+                if [ $attempt -lt $MAX_RETRIES ]; then
+                  echo "Retrying in ${RETRY_DELAY}s..."
+                  sleep $RETRY_DELAY
+                else
+                  exit 1
+                fi
+              fi
+            else
+              echo "❌ Status endpoint returned HTTP $HTTP_CODE"
+              if [ $attempt -lt $MAX_RETRIES ]; then
+                echo "Retrying in ${RETRY_DELAY}s..."
+                sleep $RETRY_DELAY
+              else
+                exit 1
+              fi
+            fi
+          done
+
+          echo "❌ Deployment verification failed after $MAX_RETRIES attempts"
+          exit 1
