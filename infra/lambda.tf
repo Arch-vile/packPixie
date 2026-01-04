@@ -205,6 +205,7 @@ resource "aws_iam_policy" "github_actions_lambda_deploy" {
           "lambda:UpdateFunctionCode",
           "lambda:UpdateFunctionConfiguration",
           "lambda:GetFunction",
+          "lambda:GetFunctionConfiguration",
           "lambda:PublishVersion"
         ]
         Resource = aws_lambda_function.api.arn
