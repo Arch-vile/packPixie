@@ -49,6 +49,8 @@ jobs:
           # Create version.json in the source before building
           echo '{"version":"${{ steps.version.outputs.version }}"}' > ./apps/api/src/version.json
           pnpm build --filter=api
+          # Ensure version.json is in the dist folder
+          cp ./apps/api/src/version.json ./apps/api/dist/version.json
           pnpm --filter=api --prod deploy ./api-deploy
           cd ./api-deploy
           mv ./dist/* .
@@ -94,6 +96,22 @@ jobs:
             if curl -f http://localhost:3001/health > /dev/null 2>&1; then
               echo "✅ Server started successfully!"
               curl -s http://localhost:3001/health | jq .
+              
+              # Verify version in status endpoint
+              echo "🔍 Verifying version..."
+              STATUS_RESPONSE=$(curl -s http://localhost:3001/api/status)
+              ACTUAL_VERSION=$(echo "$STATUS_RESPONSE" | jq -r '.version')
+              echo "Expected: $EXPECTED_VERSION"
+              echo "Actual: $ACTUAL_VERSION"
+              
+              if [ "$ACTUAL_VERSION" = "$EXPECTED_VERSION" ]; then
+                echo "✅ Version verified!"
+              else
+                echo "❌ Version mismatch!"
+                kill $SERVER_PID 2>/dev/null || true
+                exit 1
+              fi
+              
               kill $SERVER_PID 2>/dev/null || true
               exit 0
             fi
