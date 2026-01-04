@@ -123,6 +123,7 @@ jobs:
           echo "✅ Lambda function updated successfully!"
 
       - name: Get API Gateway URL from AWS Secrets Manager
+        id: api-url
         run: |
           API_URL=$(aws secretsmanager get-secret-value --secret-id pack-pixie/api-gateway-url --query SecretString --output text 2>/dev/null || echo "")
           if [ -n "$API_URL" ]; then
@@ -131,4 +132,28 @@ jobs:
             echo "  Health: ${API_URL}/health"
             echo "  Status: ${API_URL}/api/status"
             echo "  Hello:  ${API_URL}/api/hello"
+            echo "api_url=${API_URL}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify deployment - Call status endpoint
+        run: |
+          if [ -z "${{ steps.api-url.outputs.api_url }}" ]; then
+            echo "❌ API URL not found - cannot verify deployment"
+            exit 1
+          fi
+
+          echo "🔍 Testing status endpoint..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" "${{ steps.api-url.outputs.api_url }}/api/status")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          echo "HTTP Status: $HTTP_CODE"
+          echo "Response:"
+          echo "$BODY" | jq . || echo "$BODY"
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Status endpoint verified successfully!"
+          else
+            echo "❌ Status endpoint returned HTTP $HTTP_CODE"
+            exit 1
           fi
