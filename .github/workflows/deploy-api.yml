@@ -49,9 +49,26 @@ jobs:
           find . -name "*.map" -type f -delete
           echo "🧹 Cleaned up deployment directory"
 
-      - name: Smoke test - Start built API
+      - name: Package deployment zip
         run: |
           cd ./api-deploy
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          ZIP_FILE="lambda-deployment-${TIMESTAMP}.zip"
+          zip --symlinks -r -q "$ZIP_FILE" .
+          echo "ZIP_FILE=${ZIP_FILE}" >> $GITHUB_ENV
+          echo "📦 Created deployment package: $ZIP_FILE ($(du -h "$ZIP_FILE" | cut -f1))"
+
+      - name: Smoke test - Start built API from zip
+        run: |
+          cd ./api-deploy
+
+          # Extract zip to a test directory
+          TEST_DIR="./test-extract"
+          mkdir -p "$TEST_DIR"
+          unzip -q "${{ env.ZIP_FILE }}" -d "$TEST_DIR"
+          echo "📦 Extracted zip for testing"
+
+          cd "$TEST_DIR"
           timeout 10s node index.js &
           SERVER_PID=$!
 
@@ -70,15 +87,6 @@ jobs:
           echo "❌ Server failed to start"
           kill $SERVER_PID 2>/dev/null || true
           exit 1
-
-      - name: Package deployment zip
-        run: |
-          cd ./api-deploy
-          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-          ZIP_FILE="lambda-deployment-${TIMESTAMP}.zip"
-          zip -r -q "$ZIP_FILE" .
-          echo "ZIP_FILE=${ZIP_FILE}" >> $GITHUB_ENV
-          echo "📦 Created deployment package: $ZIP_FILE ($(du -h "$ZIP_FILE" | cut -f1))"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
