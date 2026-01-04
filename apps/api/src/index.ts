@@ -5,6 +5,11 @@ import sensible from '@fastify/sensible';
 import awsLambdaFastify from '@fastify/aws-lambda';
 import apiRoutes from './routes/api.js';
 
+console.log(
+  'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+);
+console.log(process.env.NODE_ENV);
+
 const fastify = Fastify({
   logger: {
     level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
