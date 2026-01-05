@@ -89,7 +89,8 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      NODE_ENV = "production"
+      NODE_ENV       = "production"
+      DYNAMODB_TABLE = aws_dynamodb_table.main.name
     }
   }
 

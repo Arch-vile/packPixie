@@ -20,6 +20,8 @@
   "license": "ISC",
   "packageManager": "pnpm@10.12.1",
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.962.0",
+    "@aws-sdk/lib-dynamodb": "^3.962.0",
     "@fastify/aws-lambda": "^6.1.1",
     "@fastify/cors": "^11.1.0",
     "@fastify/helmet": "^13.0.1",
