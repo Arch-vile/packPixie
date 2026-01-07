@@ -2,9 +2,7 @@
 
 ## 1. One-sentence definition
 
-> A free, highly customizable web app where hiking groups create shared trips, define their own packing table structure, and collaboratively track who brings what, how their personal packing is progressing, and how shared gear weight is distributed between participants.
-
----
+> A free web app where hiking groups create shared trips and collaboratively track who brings what, how everyone’s packing is progressing, and how shared gear weight is distributed across participants — using a fixed, purpose-built packing table.
 
 ## 2. Core concepts
 
@@ -15,163 +13,92 @@
 
 ### 2.2 Trips
 
-- Each **trip** has:
+Each **trip** has:
 
-  - A **name** (e.g. “Lapland Autumn Hike 2026”).
-  - A set of **participants** (users who joined via invite link).
-  - A **packing table schema** (columns).
-  - A set of **rows** (items).
-  - Trip-specific **filters**.
-  - Trip-specific **metrics** (for the Summary page).
+- A **name** (e.g. “Lapland Autumn Hike 2026”).
+- A set of **participants** (users who joined via invite link).
+- A fixed **packing list** (rows/items).
+- Built-in **views/filters** (no custom filter builder).
+- Built-in **summary metrics** (no custom metric builder).
 
-- New trip:
+Trips can be **copied**:
 
-  - Starts as a **clean slate**: only the “Item name” column exists.
+- Copy = full clone of trip data (items, participants, statuses, distribution assignments).
 
-- Trips can be **copied**:
+### 2.3 Fixed packing table fields (no custom columns)
 
-  - Copy = full clone of: rows, columns, roles, participants, filters, metrics, values (no resets).
+Every trip uses the same columns:
 
-### 2.3 Columns (trip-specific schema)
+- **Item name** (text)
+- **Bringer** (participant)
+- **Shared** (boolean)
+- **Consumable** (boolean; relevant when Shared = true)
+- **Quantity** (integer)
+- **Weight (g)** (integer; per unit)
+- **Status** (single-select, fixed list)
+- **Category** (single-select, fixed list)
 
-- Each trip defines its own **columns** via the table header.
-- Columns have:
+Suggested fixed lists (can be adjusted later, but not customizable by users in-app):
 
-  - **Name** (e.g. `Bringer`, `Weight (g)`, `Shared`, `Status`, `Category`).
-  - **Type**, e.g.:
-
-    - `text`
-    - `integer`
-    - `boolean`
-    - `participant` (pick from trip’s participants)
-    - `tag` (multi-value from a column-specific tag list)
-
-- Example setup a group might create:
-
-  - `Bringer` (participant)
-  - `Shared` (boolean)
-  - `Consumable` (boolean)
-  - `Quantity` (integer)
-  - `Weight (g)` (integer)
-  - `Status` (tag column with tags like `to-buy`, `found`, `packed`)
-  - `Category` (tag column with tags like `clothing`, `cooking`, `safety`)
-
-#### Column roles
-
-To enable smart features, some columns can be assigned **roles**:
-
-- **Bringer role** → which column tells “who is bringing this item”
-- **Weight role** → which integer column is “weight per unit in grams”
-- **Quantity role** → which integer column is quantity
-- **Shared role** → which boolean column flags shared items
-- **Consumable role** → which boolean column flags consumable shared items
-
-If roles aren’t set, related features (distribution, per-person weight, some metrics) are disabled with guidance text:
-“Set Bringer and Weight roles in column settings to see this.”
+- **Status**: `to-buy`, `found`, `packed`
+- **Category**: `clothing`, `sleep`, `cooking`, `food`, `water`, `safety`, `electronics`, `other`
 
 ### 2.4 Rows (items)
 
 > **One row = one person bringing one specific item.**
 
-- Every row belongs to one trip and has:
+- Multiple people bringing “the same thing” = multiple rows with the same **Item name** and different **Bringer** (and/or quantity/status).
 
-  - **Item name** (fixed column, always present).
-  - Values in any **custom columns** the trip defined.
-
-- Because multiple people can bring “the same thing”, that’s just multiple rows with the same `Item name` and different `Bringer`/`Quantity`/`Weight`/`Status`, etc.
-
-This directly supports:
+This supports:
 
 - Everyone tracking **their own packing** (rows where Bringer = them).
-- Group seeing **all items** in one shared table.
-- Shared items: simply rows where the column with `Shared` role is `true`.
+- The group seeing **all items** in one shared list.
+- Shared items = rows where **Shared = true**.
 
-### 2.5 Tags & status
+### 2.5 Views & filtering (built-in only)
 
-- A **tag-type column** defines a set of allowed tags for that column.
-- Users can add/remove tags per row in that column.
-- Different tag columns can serve different purposes:
+No custom filter creation. The app provides:
 
-  - `Status` tags: `to-buy`, `found`, `packed`…
-  - `Category` tags: `clothing`, `cooking`, `food`, `safety`…
+- **All items**
+- **My items** (Bringer = me)
+- **Shared gear** (Shared = true)
+- **To buy** (Status = to-buy)
+- **Packed** (Status = packed)
+- Optional: simple **search** (by item name)
 
-- Status is **not special** in the data model – just tags.
-  Groups can create whatever status workflow they like.
+### 2.6 Summary (built-in metrics only)
 
-### 2.6 Filters
+No custom metrics. The **Summary** tab shows a fixed set of useful tables, such as:
 
-- Trips can define **named filters**.
-- A filter is built from:
+- **Total weight per person** (sum of Quantity × Weight)
+- **Shared weight per person** (same, but Shared = true)
+- **Consumable vs non-consumable shared weight per person**
+- **Counts by status per person** (to-buy / found / packed)
+- **Weight by category** (overall, and/or per person)
 
-  - One or more **groups** of conditions.
-  - Each group combines conditions with **AND**.
-  - Groups are combined with **OR**.
+### 2.7 Distribution
 
-- Conditions can target any column, depending on type:
+The **Distribution** tab handles **shared gear weight distribution**.
 
-  - `participant` → equals / not equals
-  - `boolean` → is true / is false
-  - `integer` → =, <, >, etc.
-  - `text` → contains, equals
-  - `tag` → has / doesn’t have a given tag
+- Uses only items where **Shared = true**.
+- Splits shared items into:
 
-- Examples:
+  - **Consumable shared items** (Consumable = true)
+  - **Non-consumable shared items** (Consumable = false)
 
-  - `My items` → `Bringer = me`
-  - `Shared gear` → `Shared = true`
-  - `To buy` → `Status contains to-buy`
-  - Complex: `(Bringer = me AND Shared = false) OR (Shared = true AND Status contains to-buy)`
+Users can:
 
-### 2.7 Metrics & Summary
+- Run **“Suggest distribution”** to balance shared weight between participants (separately for consumable / non-consumable).
+- Manually adjust who **carries** each shared item.
+- Re-run suggestion anytime.
 
-On the **Summary** page, each trip can define **metrics**:
-
-Each metric has:
-
-- **Name** (e.g. “Weight by person and category”).
-- **Group by**: one or more columns (e.g. `Bringer`, `Category`).
-- **Optional filter**: a filter expression (reusing the same AND/OR logic).
-- **Aggregation**:
-
-  - `sum` or `count`
-  - On a chosen numeric column for `sum` (e.g. Weight).
-
-Examples:
-
-- `Per-person total weight`:
-
-  - Group by: `Bringer`
-  - Aggregate: `sum(Weight)` (and optionally multiply by Quantity if role configured)
-
-- `Count of to-buy items per person`:
-
-  - Filter: `Status contains to-buy`
-  - Group by: `Bringer`
-  - Aggregate: `count(rows)`
-
-If required roles aren’t set (e.g. no Weight role), metrics that depend on them are hidden or marked as incomplete.
-
-### 2.8 Distribution
-
-The **Distribution** page handles **shared gear weight distribution**.
-
-- It only looks at rows where the column with **Shared role** is `true`.
-- If there’s a **Consumable role**, shared items are split into:
-
-  - Consumable shared items (e.g. food, gas).
-  - Non-consumable shared items (e.g. tent, stove).
-
-- For each group (consumable / non-consumable), the app can:
-
-  - Run a **“Suggest distribution”** algorithm balancing total weight between participants.
-  - Let users **manually adjust** who carries what shared item.
-  - Allow **re-running** the suggestion from scratch.
-
-You decided:
+Important rule:
 
 - Distribution assignments **live only on the Distribution page**.
-- They **do not overwrite** the Bringer column in the main packing list.
-- Packing list shows who brings the item; Distribution page shows who carries the shared items.
+- They **do not overwrite** the **Bringer** in the packing list.
+
+  - Packing list = who _brings/owns_ the item.
+  - Distribution = who _carries_ it on the trip.
 
 ---
 
@@ -179,127 +106,75 @@ You decided:
 
 ### 3.1 Global navigation
 
-- After login:
-
-  - User is sent directly to their **most recently opened trip**.
-
-- From any trip:
-
-  - “**Back to trips**” → trip list page.
+- After login, user goes to their **most recently opened trip**.
+- From any trip: **Back to trips** → trip list.
 
 ### 3.2 Trip list page
 
-- Shows all trips the user is a member of.
+- Shows trips the user is a member of.
 - Actions:
 
-  - Open trip.
-  - Create new trip (blank).
-  - Copy existing trip (full clone).
+  - Open trip
+  - Create new trip
+  - Copy trip
 
 ### 3.3 Inside a trip – tabs
 
-At the top of a trip:
+Top-level tabs:
 
-- **Packing | Distribution | Summary** (tab bar).
+- **Packing | Distribution | Summary**
 
 #### Packing tab
 
-- Main table showing **all rows** (items) with defined columns.
-- UI:
+- Fixed-column table (no schema editing).
+- Actions:
 
-  - Add/remove rows.
-  - Inline editing of cell values.
-  - Column header menus:
+  - Add/remove rows
+  - Inline edit values (Bringer, Shared, Consumable, Quantity, Weight, Status, Category)
 
-    - Add new column.
-    - Rename column.
-    - Change type.
-    - Assign/remove column **role**.
-    - Delete column.
+- Views:
 
-- Filters:
-
-  - Build filters via AND/OR logic.
-  - Save filters with names.
-  - Select a named filter from a dropdown to change what’s visible.
-
-- Everyone sees **everyone’s items** (no private rows).
-- This tab is where:
-
-  - Users track their personal packing progress (`Status` tags etc.).
-  - Group sees coverage of items.
+  - Switch between built-in views (All / My items / Shared / To buy / Packed)
+  - Optional search
 
 #### Distribution tab
 
-- Requires at least:
+- Shows only **Shared = true** rows.
+- Two sections if relevant:
 
-  - A column with **Shared role**.
-  - Columns with **Bringer** and **Weight** roles for meaningful results.
+  - Consumable shared
+  - Non-consumable shared
 
-- Shows only rows where Shared = true.
-- If **Consumable role** exists:
+- Actions:
 
-  - Two sections: consumable shared items & non-consumable shared items.
-
-- User can:
-
-  - Run **“Suggest distribution”** to auto-balance shared weights per person (for each group).
-  - Manually tweak assignments.
-  - Re-run suggestion anytime.
-
-- Distribution data is kept separate from the main table values.
+  - Suggest distribution
+  - Manual adjustments
+  - Re-run suggestion
 
 #### Summary tab
 
-- Shows **metrics** defined for this trip.
-- Each metric rendered as a table (e.g. per-person summary).
-- Metrics can:
-
-  - Group by one or more columns.
-  - Optionally apply a filter.
-  - Use `sum` or `count` over numeric columns.
-
-- Key use: per-person total weight, shared vs personal splits, counts of to-buy items, etc.
+- Displays the built-in summary tables/metrics (no customization).
 
 ---
 
-## 4. Key MVP use cases
+## 4. Key MVP use cases (updated)
 
 1. **Plan a trip**
 
-   - Create new trip (blank).
-   - Add columns: `Bringer`, `Shared`, `Quantity`, `Weight`, `Status`, `Category`.
-   - Assign roles (Bringer, Weight, Shared, etc.).
-   - Add rows for items; each participant adds their own items.
+   - Create trip, invite people.
+   - Add items with bringer, weight, quantity, shared/consumable flags, status, category.
 
 2. **Track my packing**
 
-   - Join trip via share link and sign in with Google.
-   - Use a filter like `Bringer = me` or saved `My items` filter.
-   - Tag rows with `Status` tags (`to-buy`, `packed`, etc.).
-   - Watch Summary metrics like “My total weight” (if configured).
+   - Use **My items** view.
+   - Update **Status** as you buy/find/pack items.
 
 3. **Coordinate shared gear**
 
-   - Mark items that are group gear with `Shared = true`.
-   - Filter `Shared = true` on Packing tab to review coverage.
-   - Go to Distribution tab to see how shared weight is spread.
+   - Mark group items as **Shared** (+ Consumable when relevant).
+   - Use **Shared gear** view to review coverage.
 
 4. **Balance shared weight**
 
-   - On Distribution tab, run “Suggest distribution”.
-   - Review per-person loads for shared items.
-   - Adjust assignment manually if needed.
-   - Re-run suggestion if items/weights change.
-
-5. **Custom views & metrics**
-
-   - Create named filters (e.g. `Food`, `To buy`, `Shared gear`).
-   - Define metrics on Summary (e.g. weight by person, count of to-buy items).
-   - Use metrics to quickly inspect where the group stands.
-
----
-
-From my side, this now feels like a **full high-level description** of the application and its core behavior.
-
-Is there anything **big and conceptual** you feel is still missing (e.g. some permission idea, special hiking-specific feature, or something about how groups reuse setups between trips)?
+   - Go to **Distribution**, run **Suggest distribution**.
+   - Adjust manually if needed.
