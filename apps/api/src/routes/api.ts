@@ -1,9 +1,10 @@
+import { DescribeTableCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import { DBStatus, StatusResponse } from '@packpixie/model';
 import { FastifyInstance } from 'fastify';
-import { StatusResponse } from '@packpixie/model';
-import { readFileSync } from 'fs';
+import { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import { DynamoDBClient, DescribeTableCommand } from '@aws-sdk/client-dynamodb';
+import { Config } from '../config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -24,8 +25,11 @@ const dynamoDBClient = new DynamoDBClient({
 });
 
 // Check DynamoDB connectivity
-async function checkDynamoDB() {
-  const tableName = process.env.DYNAMODB_TABLE;
+async function checkDynamoDB(
+  conf: Config,
+  dynamoDBClient: DynamoDBDocumentClient,
+): Promise<DBStatus> {
+  const tableName = conf.dynamoDBTable;
 
   if (!tableName) {
     return {
@@ -38,10 +42,11 @@ async function checkDynamoDB() {
     await dynamoDBClient.send(
       new DescribeTableCommand({
         TableName: tableName,
-      })
+      }),
     );
     return {
       status: 'connected' as const,
+      message: 'Successfully connected to DynamoDB',
     };
   } catch (error) {
     return {
@@ -51,28 +56,33 @@ async function checkDynamoDB() {
   }
 }
 
-export default async function apiRoutes(fastify: FastifyInstance) {
-  // Register API routes with /api prefix
-  fastify.register(
-    async function (fastify) {
-      fastify.get('/hello', async (request, reply) => {
-        return { message: 'Hello from PackPixie API!' };
-      });
+export function apiRoutes(
+  conf: Config,
+  dynamoDBClient: DynamoDBDocumentClient,
+) {
+  return async function (fastify: FastifyInstance) {
+    // Register API routes with /api prefix
+    fastify.register(
+      async function (fastify) {
+        fastify.get('/hello', async (request, reply) => {
+          return { message: 'Hello from PackPixie API!' };
+        });
 
-      fastify.get(
-        '/status',
-        async (request, reply): Promise<StatusResponse> => {
-          const dbStatus = await checkDynamoDB();
+        fastify.get(
+          '/status',
+          async (request, reply): Promise<StatusResponse> => {
+            const dbStatus = await checkDynamoDB(conf, dynamoDBClient);
 
-          return {
-            status: 'running',
-            version: appVersion,
-            timestamp: new Date().toISOString(),
-            database: dbStatus,
-          };
-        }
-      );
-    },
-    { prefix: '/api' }
-  );
+            return {
+              status: 'running',
+              version: appVersion,
+              timestamp: new Date().toISOString(),
+              database: dbStatus,
+            };
+          },
+        );
+      },
+      { prefix: '/api' },
+    );
+  };
 }

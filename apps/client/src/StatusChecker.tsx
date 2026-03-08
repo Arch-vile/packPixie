@@ -85,6 +85,10 @@ export default function StatusChecker() {
             <strong>Version:</strong> {statusData.version}
           </p>
           <p>
+            <strong>Database Status:</strong> {statusData.database.status} -{' '}
+            {statusData.database.message}
+          </p>
+          <p>
             <strong>Timestamp:</strong> {statusData.timestamp}
           </p>
         </div>

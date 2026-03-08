@@ -3,12 +3,22 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import sensible from '@fastify/sensible';
 import awsLambdaFastify from '@fastify/aws-lambda';
-import apiRoutes from './routes/api.js';
+import { apiRoutes } from './routes/api.js';
+import { config, Config } from './config.js';
+import 'dotenv/config';
+import { createDynamoDBClient } from './lib/dynamodb.js';
 
 console.log(
-  'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+  'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
 );
 console.log(process.env.NODE_ENV);
+
+const conf: Config = config()
+  .dynamoDBTable(process.env.DYNAMODB_TABLE) //
+  .build();
+
+// Initialize DynamoDB client
+const dynamoDBClient = createDynamoDBClient();
 
 const fastify = Fastify({
   logger: {
@@ -34,7 +44,7 @@ fastify.get('/health', async (request, reply) => {
 });
 
 // Register API routes
-await fastify.register(apiRoutes);
+await fastify.register(apiRoutes(conf, dynamoDBClient));
 
 // Lambda handler export
 export const handler = awsLambdaFastify(fastify);

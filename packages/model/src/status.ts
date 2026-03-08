@@ -5,8 +5,10 @@ export interface StatusResponse {
   status: string;
   version: string;
   timestamp: string;
-  database?: {
-    status: 'connected' | 'disconnected' | 'error';
-    message?: string;
-  };
+  database: DBStatus;
 }
+
+export type DBStatus = {
+  status: 'connected' | 'disconnected' | 'error';
+  message: string;
+};
