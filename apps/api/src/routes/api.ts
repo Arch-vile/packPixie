@@ -2,9 +2,10 @@ import { DescribeTableCommand } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { DBStatus, StatusResponse } from '@packpixie/model';
 import { FastifyInstance } from 'fastify';
-import { dirname } from 'path';
+import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { Config } from '../config';
+import { readFileSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -18,11 +19,6 @@ try {
 } catch (error) {
   // Use default 'dev' if file doesn't exist
 }
-
-// Initialize DynamoDB client
-const dynamoDBClient = new DynamoDBClient({
-  region: process.env.AWS_REGION || 'us-east-1',
-});
 
 // Check DynamoDB connectivity
 async function checkDynamoDB(
