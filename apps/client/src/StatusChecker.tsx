@@ -11,7 +11,7 @@ export default function StatusChecker() {
     setError(null);
 
     try {
-      const apiBaseUrl = 'http://localhost:3001';
+      const apiBaseUrl = import.meta.env.VITE_API_URL;
       const response = await fetch(`${apiBaseUrl}/api/status`);
 
       if (!response.ok) {

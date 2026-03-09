@@ -23,18 +23,26 @@ jobs:
         with:
           version: 10.12.1
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build application
-        run: pnpm turbo run build --filter=client
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Get API URL from AWS Secrets Manager
+        id: get-api-url
+        run: |
+          API_GATEWAY_URL=$(aws secretsmanager get-secret-value --secret-id pack-pixie/api-gateway-url --query SecretString --output text)
+          echo "api_gateway_url=$API_GATEWAY_URL" >> $GITHUB_OUTPUT
+
+      - name: Build application
+        run: pnpm turbo run build --filter=client
+        env:
+          VITE_API_URL: ${{ steps.get-api-url.outputs.api_gateway_url }}
 
       - name: Get S3 bucket name from AWS Secrets Manager
         id: get-bucket
