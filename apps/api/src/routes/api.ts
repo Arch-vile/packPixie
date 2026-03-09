@@ -1,11 +1,16 @@
 import { DescribeTableCommand } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import {
+  DynamoDBDocumentClient,
+  QueryCommand,
+  PutCommand,
+} from '@aws-sdk/lib-dynamodb';
 import { DBStatus, StatusResponse } from '@packpixie/model';
 import { FastifyInstance } from 'fastify';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { Config } from '../config';
 import { readFileSync } from 'fs';
+import { randomUUID } from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -77,6 +82,52 @@ export function apiRoutes(
             };
           },
         );
+
+        fastify.get('/comments', async (request, reply) => {
+          const result = await dynamoDBClient.send(
+            new QueryCommand({
+              TableName: conf.dynamoDBTable,
+              KeyConditionExpression: 'PK = :pk',
+              ExpressionAttributeValues: { ':pk': 'COMMENTS' },
+              ScanIndexForward: false,
+            }),
+          );
+
+          const comments = (result.Items ?? []).map((item) => ({
+            id: item.SK as string,
+            text: item.text as string,
+            createdAt: item.createdAt as string,
+          }));
+
+          return { comments };
+        });
+
+        fastify.post('/comments', async (request, reply) => {
+          const body = request.body as { text?: string };
+          const text = body?.text?.trim();
+
+          if (!text) {
+            return reply.status(400).send({ error: 'text is required' });
+          }
+
+          const now = new Date().toISOString();
+          const id = randomUUID();
+          const sk = `${now}#${id}`;
+
+          await dynamoDBClient.send(
+            new PutCommand({
+              TableName: conf.dynamoDBTable,
+              Item: {
+                PK: 'COMMENTS',
+                SK: sk,
+                text,
+                createdAt: now,
+              },
+            }),
+          );
+
+          return reply.status(201).send({ id: sk, text, createdAt: now });
+        });
       },
       { prefix: '/api' },
     );
