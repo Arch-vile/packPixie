@@ -33,24 +33,26 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Get API URL from AWS Secrets Manager
-        id: get-api-url
+      - name: Get secrets
+        id: secrets
         run: |
           API_GATEWAY_URL=$(aws secretsmanager get-secret-value --secret-id pack-pixie/api-gateway-url --query SecretString --output text)
+          COGNITO_USER_POOL_ID=$(aws secretsmanager get-secret-value --secret-id pack-pixie/cognito-user-pool-id --query SecretString --output text)
+          COGNITO_USER_POOL_CLIENT_ID=$(aws secretsmanager get-secret-value --secret-id pack-pixie/cognito-user-pool-client-id --query SecretString --output text)
+          BUCKET_NAME=$(aws secretsmanager get-secret-value --secret-id pack-pixie/s3-bucket-client --query SecretString --output text)
           echo "api_gateway_url=$API_GATEWAY_URL" >> $GITHUB_OUTPUT
+          echo "cognito_user_pool_id=$COGNITO_USER_POOL_ID" >> $GITHUB_OUTPUT
+          echo "cognito_user_pool_client_id=$COGNITO_USER_POOL_CLIENT_ID" >> $GITHUB_OUTPUT
+          echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
 
       - name: Build application
         run: pnpm turbo run build --filter=client
         env:
-          VITE_API_URL: ${{ steps.get-api-url.outputs.api_gateway_url }}
-
-      - name: Get S3 bucket name from AWS Secrets Manager
-        id: get-bucket
-        run: |
-          BUCKET_NAME=$(aws secretsmanager get-secret-value --secret-id pack-pixie/s3-bucket-client --query SecretString --output text)
-          echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
+          VITE_API_URL: ${{ steps.secrets.outputs.api_gateway_url }}
+          VITE_COGNITO_USER_POOL_ID: ${{ steps.secrets.outputs.cognito_user_pool_id }}
+          VITE_COGNITO_USER_POOL_CLIENT_ID: ${{ steps.secrets.outputs.cognito_user_pool_client_id }}
 
       - name: Deploy to S3
         run: |
-          aws s3 sync apps/client/dist/ s3://${{ steps.get-bucket.outputs.bucket_name }} --delete
-          aws s3 cp apps/client/dist/index.html s3://${{ steps.get-bucket.outputs.bucket_name }}/index.html --cache-control "no-cache"
+          aws s3 sync apps/client/dist/ s3://${{ steps.secrets.outputs.bucket_name }} --delete
+          aws s3 cp apps/client/dist/index.html s3://${{ steps.secrets.outputs.bucket_name }}/index.html --cache-control "no-cache"

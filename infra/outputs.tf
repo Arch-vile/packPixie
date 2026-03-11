@@ -99,6 +99,22 @@ output "api_gateway_url_secret_name" {
   value       = aws_secretsmanager_secret.api_gateway_url.name
 }
 
+# Cognito outputs
+output "cognito_user_pool_id" {
+  description = "Cognito User Pool ID"
+  value       = aws_cognito_user_pool.main.id
+}
+
+output "cognito_user_pool_client_id" {
+  description = "Cognito User Pool Client ID (web / SPA client)"
+  value       = aws_cognito_user_pool_client.web.id
+}
+
+output "cognito_region" {
+  description = "AWS region where the Cognito User Pool is deployed"
+  value       = var.aws_region
+}
+
 # DynamoDB outputs
 output "dynamodb_table_name" {
   description = "Name of the DynamoDB table"
