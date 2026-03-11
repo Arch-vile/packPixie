@@ -53,3 +53,23 @@ body {
 .read-the-docs {
   color: #888;
 }
+
+.signed-in-label {
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+.sign-out-btn {
+  margin-bottom: 1.5rem;
+  padding: 0.4rem 1.2rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.sign-out-btn:hover {
+  background: #f5f5f5;
+}

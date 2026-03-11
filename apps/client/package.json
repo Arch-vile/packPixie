@@ -11,7 +11,9 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@aws-amplify/ui-react": "^6.15.2",
     "@packpixie/model": "workspace:*",
+    "aws-amplify": "^6.16.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },

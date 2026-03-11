@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { StatusResponse } from '@packpixie/model';
+import config from './config';
 
 export default function StatusChecker() {
   const [statusData, setStatusData] = useState<StatusResponse | null>(null);
@@ -11,8 +12,7 @@ export default function StatusChecker() {
     setError(null);
 
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_URL;
-      const response = await fetch(`${apiBaseUrl}/api/status`);
+      const response = await fetch(`${config.apiUrl}/api/status`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import config from './config';
 
 interface Comment {
   id: string;
@@ -13,7 +14,7 @@ export default function Comments() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const apiBaseUrl = import.meta.env.VITE_API_URL;
+  const apiBaseUrl = config.apiUrl;
 
   const fetchComments = useCallback(async () => {
     setLoading(true);
