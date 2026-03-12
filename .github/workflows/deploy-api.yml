@@ -20,7 +20,6 @@ jobs:
           GIT_SHA_SHORT=$(git rev-parse --short HEAD)
           APP_VERSION="${BASE_VERSION}-${GIT_SHA_SHORT}"
           echo "version=${APP_VERSION}" >> $GITHUB_OUTPUT
-          echo "sha=${GIT_SHA_SHORT}" >> $GITHUB_OUTPUT
           echo "📦 Version: ${APP_VERSION}"
 
       - name: Setup Node.js

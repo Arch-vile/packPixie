@@ -33,6 +33,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate version
+        id: version
+        run: |
+          BASE_VERSION=$(node -p "require('./apps/client/package.json').version")
+          GIT_SHA_SHORT=$(git rev-parse --short HEAD)
+          APP_VERSION="${BASE_VERSION}-${GIT_SHA_SHORT}"
+          echo "version=${APP_VERSION}" >> $GITHUB_OUTPUT
+          echo "📦 Version: ${APP_VERSION}"
+
       - name: Get secrets
         id: secrets
         run: |
@@ -51,6 +60,7 @@ jobs:
           VITE_API_URL: ${{ steps.secrets.outputs.api_gateway_url }}
           VITE_COGNITO_USER_POOL_ID: ${{ steps.secrets.outputs.cognito_user_pool_id }}
           VITE_COGNITO_USER_POOL_CLIENT_ID: ${{ steps.secrets.outputs.cognito_user_pool_client_id }}
+          VITE_APP_VERSION: ${{ steps.version.outputs.version }}
 
       - name: Deploy to S3
         run: |

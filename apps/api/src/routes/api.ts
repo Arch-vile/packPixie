@@ -15,14 +15,13 @@ import { randomUUID } from 'crypto';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Read version from version.json file
-let appVersion = 'dev';
+let appVersion = 'unknown';
 try {
   const versionPath = join(__dirname, '..', 'version.json');
   const versionData = JSON.parse(readFileSync(versionPath, 'utf-8'));
   appVersion = versionData.version;
 } catch (error) {
-  // Use default 'dev' if file doesn't exist
+  appVersion = 'error';
 }
 
 // Check DynamoDB connectivity
