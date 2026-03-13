@@ -14,7 +14,9 @@ console.log(
 console.log(process.env.NODE_ENV);
 
 const conf: Config = config()
-  .dynamoDBTable(process.env.DYNAMODB_TABLE) //
+  .dynamoDBTable(process.env.DYNAMODB_TABLE)
+  .cognitoUserPoolId(process.env.COGNITO_USER_POOL_ID)
+  .cognitoClientId(process.env.COGNITO_CLIENT_ID)
   .build();
 
 // Initialize DynamoDB client

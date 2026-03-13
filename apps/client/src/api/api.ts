@@ -3,7 +3,19 @@ import type {
   CreateTripResponse,
   GetTripsResponse,
 } from '@packpixie/model';
+import { fetchAuthSession } from 'aws-amplify/auth';
 import config from '../config';
+
+async function getAuthHeaders(): Promise<HeadersInit> {
+  const session = await fetchAuthSession();
+  const idToken = session.tokens?.idToken?.toString();
+  if (!idToken) {
+    throw new Error('Not authenticated');
+  }
+  return {
+    Authorization: `Bearer ${idToken}`,
+  };
+}
 
 export async function getApiStatus() {
   const response = await fetch(`${config.apiUrl}/api/status`);
@@ -13,10 +25,9 @@ export async function getApiStatus() {
   }
 }
 
-export async function getTrips(userEmail: string): Promise<GetTripsResponse> {
-  const response = await fetch(
-    `${config.apiUrl}/api/trips?userEmail=${encodeURIComponent(userEmail)}`,
-  );
+export async function getTrips(): Promise<GetTripsResponse> {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${config.apiUrl}/api/trips`, { headers });
   if (!response.ok) {
     throw new Error('Failed to load trips');
   }
@@ -24,14 +35,14 @@ export async function getTrips(userEmail: string): Promise<GetTripsResponse> {
 }
 
 export async function createTrip(
-  userEmail: string,
   tripName: string,
   participantEmails: string[],
 ): Promise<CreateTripResponse> {
+  const headers = await getAuthHeaders();
   const response = await fetch(`${config.apiUrl}/api/trips`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userEmail, tripName, participantEmails }),
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tripName, participantEmails }),
   });
   if (!response.ok) {
     throw new Error('Failed to create trip');

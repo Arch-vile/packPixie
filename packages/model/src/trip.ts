@@ -7,7 +7,6 @@ export interface Trip {
 
 export interface CreateTripRequest {
   tripName: string;
-  userEmail: string;
   participantEmails: string[];
 }
 

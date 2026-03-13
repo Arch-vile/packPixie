@@ -27,9 +27,11 @@
     "@fastify/helmet": "^13.0.1",
     "@fastify/sensible": "^6.0.3",
     "@packpixie/model": "workspace:*",
+    "aws-jwt-verify": "^5.1.1",
     "aws-lambda": "^1.0.7",
     "dotenv": "^17.3.1",
-    "fastify": "^5.5.0"
+    "fastify": "^5.5.0",
+    "fastify-plugin": "^5.1.0"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

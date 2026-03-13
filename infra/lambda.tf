@@ -89,8 +89,10 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      NODE_ENV       = "production"
-      DYNAMODB_TABLE = aws_dynamodb_table.main.name
+      NODE_ENV             = "production"
+      DYNAMODB_TABLE       = aws_dynamodb_table.main.name
+      COGNITO_USER_POOL_ID = aws_cognito_user_pool.main.id
+      COGNITO_CLIENT_ID    = aws_cognito_user_pool_client.web.id
     }
   }
 

@@ -45,8 +45,8 @@ export function TripList({ userEmail, trips, onTripsChange }: TripListProps) {
     setError(null);
 
     try {
-      await createTrip(userEmail, name, participantEmails);
-      const { trips: updated } = await getTrips(userEmail);
+      await createTrip(name, participantEmails);
+      const { trips: updated } = await getTrips();
       onTripsChange(updated);
       setTripName('');
       setParticipantEmails([]);

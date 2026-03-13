@@ -50,14 +50,16 @@ Cheap, collaborative hiking trip packing app with **fixed, purpose-built data mo
 
 ## 3. Auth & identity
 
-Unchanged:
-
-- **Cognito User Pool**
-- **Google** as IdP
-- Frontend sends `Authorization: Bearer <id-token>`
-- API Gateway Cognito authorizer validates JWT
-- Lambda reads user identity from JWT claims (e.g. `sub`, email)
-- Backend trusts **claims**, not client-provided identity fields.
+- **Cognito User Pool** with **Google** as IdP
+- Frontend uses `fetchAuthSession()` from `aws-amplify/auth` to get the current Cognito ID token
+- Frontend sends `Authorization: Bearer <id-token>` on all authenticated API calls
+- JWT verification happens in **Fastify middleware** (`apps/api/src/plugins/auth.ts`), not at the API Gateway layer
+  - Uses `aws-jwt-verify` (Amazon's official library) to validate Cognito ID tokens
+  - JWKS keys are fetched once from Cognito's public endpoint and cached in memory (persists across warm Lambda invocations)
+  - Sets `request.user` with `sub` and `email` from verified JWT claims
+  - Returns 401 for missing/invalid/expired tokens
+- Backend trusts **claims**, not client-provided identity fields
+- Routes are split into **public** (`/api/hello`, `/api/status`) and **protected** (everything else) scopes
 
 ---
 

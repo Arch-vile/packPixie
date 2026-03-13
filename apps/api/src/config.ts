@@ -2,6 +2,8 @@
 
 export type Config = {
   dynamoDBTable: string;
+  cognitoUserPoolId: string;
+  cognitoClientId: string;
 };
 
 export function config() {
@@ -13,6 +15,20 @@ export function config() {
         throw new Error('DynamoDB table name is required');
       }
       conf.dynamoDBTable = tableName;
+      return this;
+    },
+    cognitoUserPoolId(id?: string) {
+      if (!id) {
+        throw new Error('Cognito user pool ID is required');
+      }
+      conf.cognitoUserPoolId = id;
+      return this;
+    },
+    cognitoClientId(id?: string) {
+      if (!id) {
+        throw new Error('Cognito client ID is required');
+      }
+      conf.cognitoClientId = id;
       return this;
     },
     build(): Config {

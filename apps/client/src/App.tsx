@@ -32,7 +32,7 @@ function AppContent({ userEmail, onSignOut }: AppContentProps) {
 
   useEffect(() => {
     if (!userEmail) return;
-    getTrips(userEmail)
+    getTrips()
       .then(({ trips }) => setTrips(trips))
       .catch(() => {});
   }, [userEmail]);
