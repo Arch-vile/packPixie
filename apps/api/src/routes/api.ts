@@ -16,8 +16,8 @@ import {
 import { FastifyInstance } from 'fastify';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import { Config } from '../config';
-import { authPlugin } from '../plugins/auth';
+import { Config } from '../config.js';
+import { authPlugin } from '../plugins/auth.js';
 import { readFileSync } from 'fs';
 import { randomUUID } from 'crypto';
 
@@ -29,7 +29,7 @@ try {
   const versionPath = join(__dirname, '..', 'version.json');
   const versionData = JSON.parse(readFileSync(versionPath, 'utf-8'));
   appVersion = versionData.version;
-} catch (error) {
+} catch (_error) {
   appVersion = 'error';
 }
 
@@ -74,13 +74,13 @@ export function apiRoutes(
     fastify.register(
       async function (fastify) {
         // Public routes (no auth)
-        fastify.get('/hello', async (request, reply) => {
+        fastify.get('/hello', async (_request, _reply) => {
           return { message: 'Hello from PackPixie API!' };
         });
 
         fastify.get(
           '/status',
-          async (request, reply): Promise<StatusResponse> => {
+          async (_request, _reply): Promise<StatusResponse> => {
             const dbStatus = await checkDynamoDB(conf, dynamoDBClient);
 
             return {
@@ -96,7 +96,7 @@ export function apiRoutes(
         fastify.register(async function (protected_) {
           await protected_.register(authPlugin(conf));
 
-          protected_.get('/comments', async (request, reply) => {
+          protected_.get('/comments', async (_request, _reply) => {
             const result = await dynamoDBClient.send(
               new QueryCommand({
                 TableName: conf.dynamoDBTable,
@@ -232,7 +232,7 @@ export function apiRoutes(
 
           protected_.get(
             '/trips',
-            async (request, reply): Promise<GetTripsResponse> => {
+            async (request, _reply): Promise<GetTripsResponse> => {
               const userEmail = request.user.email;
 
               const result = await dynamoDBClient.send(

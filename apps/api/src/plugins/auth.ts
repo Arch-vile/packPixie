@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
 import { CognitoJwtVerifier } from 'aws-jwt-verify';
-import { Config } from '../config';
+import { Config } from '../config.js';
 
 export interface AuthUser {
   sub: string;
