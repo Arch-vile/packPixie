@@ -76,7 +76,9 @@ jobs:
       - name: Smoke test - Start built API from zip
         env:
           EXPECTED_VERSION: ${{ steps.version.outputs.version }}
-          DYNAMODB_TABLE: 'not used in smoke test yet'
+          DYNAMODB_TABLE: 'smoke-test'
+          COGNITO_USER_POOL_ID: 'us-east-1_smoketest'
+          COGNITO_CLIENT_ID: 'smoketest'
         run: |
           cd ./api-deploy
 
