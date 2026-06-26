@@ -10,7 +10,8 @@
     "clean": "turbo run clean",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
-    "prepare": "husky"
+    "prepare": "husky",
+    "purge": "rm -rf node_modules apps/api/node_modules apps/api/dist apps/client/node_modules apps/client/dist packages/model/node_modules packages/model/dist .turbo && pnpm install && pnpm build"
   },
   "keywords": [],
   "author": "",
