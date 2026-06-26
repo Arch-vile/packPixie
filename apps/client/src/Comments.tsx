@@ -1,37 +1,26 @@
 import { useState, useEffect, useCallback } from 'react';
-import config from './config';
-
-interface Comment {
-  id: string;
-  text: string;
-  createdAt: string;
-}
+import { type TripComment } from '@packpixie/model';
+import { getComments, postComment } from './api/api';
 
 export default function Comments() {
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<TripComment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const apiBaseUrl = config.apiUrl;
-
   const fetchComments = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/comments`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data: { comments: Comment[] } = await response.json();
-      setComments(data.comments);
+      const data = await getComments();
+      setComments(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load comments');
     } finally {
       setLoading(false);
     }
-  }, [apiBaseUrl]);
+  }, []);
 
   const addComment = async () => {
     const text = newComment.trim();
@@ -40,14 +29,7 @@ export default function Comments() {
     setSubmitting(true);
     setError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      await postComment(text);
       setNewComment('');
       await fetchComments();
     } catch (err) {
