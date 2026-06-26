@@ -1,20 +1,20 @@
-import js from '@eslint/js'
-import globals from 'globals'
-import tseslint from 'typescript-eslint'
-import importPlugin from 'eslint-plugin-import'
-import { globalIgnores } from 'eslint/config'
+import js from '@eslint/js';
+import globals from 'globals';
+import tseslint from 'typescript-eslint';
+import importPlugin from 'eslint-plugin-import';
+import { globalIgnores } from 'eslint/config';
 
 export default tseslint.config([
   globalIgnores(['dist']),
   {
     files: ['**/*.ts'],
-    extends: [
-      js.configs.recommended,
-      tseslint.configs.recommended,
-    ],
+    extends: [js.configs.recommended, tseslint.configs.recommended],
     languageOptions: {
       ecmaVersion: 2022,
       globals: globals.node,
+      parserOptions: {
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
     plugins: {
       import: importPlugin,
@@ -25,14 +25,21 @@ export default tseslint.config([
       },
     },
     rules: {
-      'import/extensions': ['error', 'ignorePackages', {
-        ts: 'never',
-        js: 'always',
-      }],
-      '@typescript-eslint/no-unused-vars': ['error', {
-        argsIgnorePattern: '^_',
-        caughtErrorsIgnorePattern: '^_',
-      }],
+      'import/extensions': [
+        'error',
+        'ignorePackages',
+        {
+          ts: 'never',
+          js: 'always',
+        },
+      ],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
     },
   },
-])
+]);
