@@ -506,8 +506,13 @@ Playwright's runtime transform handles compilation independently of tsc.
           await page.getByRole('textbox', { name: /password/i }).fill(password);
           await page.getByRole('button', { name: /sign in/i }).click();
 
-          // Wait for redirect to dashboard — confirms successful Cognito token exchange
-          await page.waitForURL('**/', { timeout: 30_000 });
+          // App is a SPA — URL never changes after login. Wait for the Amplify
+          // Authenticator form to detach from the DOM, which confirms the Cognito
+          // token exchange completed and the app has rendered.
+          await page.waitForSelector('[data-amplify-authenticator] form', {
+            state: 'detached',
+            timeout: 30_000,
+          });
 
           await context.storageState({ path: AUTH_STATE_PATH });
         } finally {
@@ -516,9 +521,9 @@ Playwright's runtime transform handles compilation independently of tsc.
       }
   </action>
   <verify>
-    <automated>test -f apps/e2e/src/auth/login.ts && grep -q "loginAndSaveState" apps/e2e/src/auth/login.ts && grep -q "TEST_USER_EMAIL" apps/e2e/src/auth/login.ts && grep -q "data-amplify-authenticator" apps/e2e/src/auth/login.ts && echo "PASS"</automated>
+    <automated>test -f apps/e2e/src/auth/login.ts && grep -q "loginAndSaveState" apps/e2e/src/auth/login.ts && grep -q "TEST_USER_EMAIL" apps/e2e/src/auth/login.ts && grep -q "state: 'detached'" apps/e2e/src/auth/login.ts && echo "PASS"</automated>
   </verify>
-  <done>apps/e2e/src/auth/login.ts exists; exports loginAndSaveState; throws clear error when TEST_USER_EMAIL is missing; waits for Amplify component hydration; saves storageState to .auth/user.json; browser.close() is in finally block.</done>
+  <done>apps/e2e/src/auth/login.ts exists; exports loginAndSaveState; throws clear error when TEST_USER_EMAIL is missing; waits for Amplify form to detach (not waitForURL — SPA never navigates); saves storageState to .auth/user.json; browser.close() is in finally block.</done>
 </task>
 
 </tasks>
@@ -925,6 +930,12 @@ Playwright's runtime transform handles compilation independently of tsc.
       The file `.auth/user.json` is created by global setup during the Cognito login step. If
       it is missing, global setup failed — check the Playwright console output for the error
       message. Fix the underlying issue and re-run `pnpm test:e2e`.
+
+      **API fails to start / "webServer" times out after 30 seconds**
+      If `COGNITO_USER_POOL_ID` or `COGNITO_CLIENT_ID` are blank in `.env.test`, the API
+      throws `Error: Cognito user pool ID is required` immediately on startup and exits.
+      Playwright's webServer health check then times out after 30s with a generic error.
+      Fix: fill in both Cognito values in `.env.test` before running tests.
 
       **Cognito login times out or fails**
       Verify that `TEST_USER_EMAIL` and `TEST_USER_PASSWORD` in `.env.test` match the user
