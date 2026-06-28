@@ -43,6 +43,13 @@
 
 **Requirements covered:** ORCH-01–05, DB-01–04, AUTH-01–04
 
+**Plans:** 4 plans (2 waves)
+Plans:
+- [ ] 02-PLAN.md Plan 1 — Dependencies + environment files (package.json, tsconfig.json, .env.example, .gitignore)
+- [ ] 02-PLAN.md Plan 2 — DB layer + auth helper (src/db/init.ts, src/db/seed.ts, src/auth/login.ts)
+- [ ] 02-PLAN.md Plan 3 — Global setup + teardown (global-setup.ts, global-teardown.ts)
+- [ ] 02-PLAN.md Plan 4 — Playwright config update + README (playwright.config.ts, README.md)
+
 **UAT criteria:**
 - `pnpm test:e2e` with a real `.env.test` starts DynamoDB Local, creates the table, and tears everything down cleanly on exit
 - Re-running immediately after a run doesn't fail due to leftover containers or table state
