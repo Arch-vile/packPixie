@@ -11,6 +11,6 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true
   },
-  "include": ["playwright.config.ts", "tests/**/*"],
+  "include": ["playwright.config.ts", "global-setup.ts", "global-teardown.ts", "tests/**/*", "src/**/*"],
   "exclude": ["node_modules"]
 }

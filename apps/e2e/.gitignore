@@ -1,3 +1,7 @@
 node_modules/
 test-results/
 playwright-report/
+
+.auth/
+.env.test
+.e2e-state.json
