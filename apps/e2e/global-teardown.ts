@@ -6,7 +6,9 @@ import { createTestDynamoDBClient, deleteTable } from './src/db/init';
 
 const STATE_FILE = join(import.meta.dirname, '.e2e-state.json');
 
-export default async function globalTeardown(_config: FullConfig): Promise<void> {
+export default async function globalTeardown(
+  _config: FullConfig,
+): Promise<void> {
   // Step 1: Delete the DynamoDB table (DB-03, D-12)
   // deleteTable swallows ResourceNotFoundException — safe even if setup failed mid-way
   try {

@@ -12,44 +12,25 @@ setup below.
 
 ## One-Time Setup
 
-### 1. Configure environment variables
+### 1. Configure environment variables and create the test user
+
+Run `setup-env.sh` from the e2e root — it pulls Cognito values from Terraform, writes `.env.test`, and creates the Cognito test user in one step:
 
 ```bash
-cp apps/e2e/.env.example apps/e2e/.env.test
+./apps/e2e/setup-env.sh you@example.com YourPass123!
 ```
 
-Open `apps/e2e/.env.test` and fill in the values from your AWS environment:
+The script is idempotent — safe to re-run if you need to update credentials.
 
-| Variable | Where to find it |
-|---|---|
-| `COGNITO_USER_POOL_ID` | AWS Console → Cognito → User Pools → your pool → Overview |
-| `COGNITO_CLIENT_ID` | AWS Console → Cognito → User Pools → your pool → App clients |
-| `TEST_USER_EMAIL` | Email address of the test user you will create in step 2 |
-| `TEST_USER_PASSWORD` | Permanent password you will set for the test user |
+| Variable               | Description                                       |
+| ---------------------- | ------------------------------------------------- |
+| `COGNITO_USER_POOL_ID` | Pulled automatically from `terraform output`      |
+| `COGNITO_CLIENT_ID`    | Pulled automatically from `terraform output`      |
+| `TEST_USER_EMAIL`      | First argument (or `TEST_USER_EMAIL` env var)     |
+| `TEST_USER_PASSWORD`   | Second argument (or `TEST_USER_PASSWORD` env var) |
 
 Leave `DYNAMODB_TABLE`, `LOCAL_DYNAMODB_URL`, `VITE_APP_VERSION`, and `VITE_API_URL`
 at their default values unless you have a specific reason to change them.
-
-### 2. Create a Cognito test user
-
-Run the following AWS CLI commands (replace the placeholder values with yours):
-
-```bash
-# Create the user account (initial password is temporary — must be reset)
-aws cognito-idp admin-create-user \
-  --user-pool-id YOUR_COGNITO_USER_POOL_ID \
-  --username YOUR_TEST_USER_EMAIL \
-  --temporary-password TempPass123!
-
-# Set a permanent password so the account does not require a forced reset on first login
-aws cognito-idp admin-set-user-password \
-  --user-pool-id YOUR_COGNITO_USER_POOL_ID \
-  --username YOUR_TEST_USER_EMAIL \
-  --password YOUR_TEST_USER_PASSWORD \
-  --permanent
-```
-
-The test user only needs to exist in Cognito. No application-level setup is required.
 
 ## Running Tests
 
@@ -83,6 +64,7 @@ for the full CI pipeline.
 
 **Port 8000 already in use**
 DynamoDB Local requires host port 8000. If another process is using it:
+
 ```bash
 lsof -i :8000        # identify the process
 kill -9 <PID>        # stop it

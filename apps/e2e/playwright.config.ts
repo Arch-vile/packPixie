@@ -68,7 +68,8 @@ export default defineConfig({
         ...process.env,
         NODE_ENV: 'test',
         DYNAMODB_TABLE: process.env.DYNAMODB_TABLE ?? 'packpixie-test',
-        LOCAL_DYNAMODB_URL: process.env.LOCAL_DYNAMODB_URL ?? 'http://localhost:8000',
+        LOCAL_DYNAMODB_URL:
+          process.env.LOCAL_DYNAMODB_URL ?? 'http://localhost:8000',
         COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID ?? '',
         COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID ?? '',
       },
