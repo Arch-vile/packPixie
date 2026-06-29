@@ -72,6 +72,10 @@ Plans:
 
 **Requirements covered:** CI-01–05
 
+**Plans:** 1 plan
+Plans:
+- [ ] 03-PLAN.md — Fix CI reporter + create e2e.yml workflow + add CI secrets docs to README
+
 **UAT criteria:**
 - A push to a feature branch triggers the workflow
 - DynamoDB Local is reachable at `http://localhost:8000` in the CI job
