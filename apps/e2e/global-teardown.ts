@@ -4,12 +4,12 @@ import type { FullConfig } from '@playwright/test';
 
 import { createTestDynamoDBClient, deleteTable } from './src/db/init';
 
-const STATE_FILE = join(import.meta.dirname, '.e2e-state.json');
+const AUTH_FILE = join(import.meta.dirname, '.auth', 'user.json');
 
 export default async function globalTeardown(
   _config: FullConfig,
 ): Promise<void> {
-  // Step 1: Delete the DynamoDB table (DB-03, D-12)
+  // Step 1: Delete the DynamoDB table
   // deleteTable swallows ResourceNotFoundException — safe even if setup failed mid-way
   try {
     const dbClient = createTestDynamoDBClient();
@@ -19,14 +19,14 @@ export default async function globalTeardown(
     console.error('[teardown] Failed to delete DynamoDB table:', err);
   }
 
-  // Step 2: Remove container state file
+  // Step 2: Remove auth state — Cognito tokens expire after ~1h; always regenerate on next run
   try {
-    if (existsSync(STATE_FILE)) {
-      unlinkSync(STATE_FILE);
+    if (existsSync(AUTH_FILE)) {
+      unlinkSync(AUTH_FILE);
     }
   } catch {
     // Non-fatal
   }
 
-  // Container cleanup is handled automatically by the Ryuk reaper on process exit (D-13)
+  // Container cleanup is handled automatically by the Ryuk reaper on process exit
 }

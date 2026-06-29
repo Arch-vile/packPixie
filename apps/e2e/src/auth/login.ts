@@ -2,6 +2,8 @@ import { chromium } from '@playwright/test';
 import { mkdirSync } from 'fs';
 import { dirname, join } from 'path';
 
+import { config } from '../config';
+
 const AUTH_STATE_PATH = join(
   import.meta.dirname,
   '..',
@@ -11,16 +13,7 @@ const AUTH_STATE_PATH = join(
 );
 
 export async function loginAndSaveState(): Promise<void> {
-  const email = process.env.TEST_USER_EMAIL;
-  const password = process.env.TEST_USER_PASSWORD;
-  const baseURL = process.env.BASE_URL ?? 'http://localhost:5173';
-
-  if (!email || !password) {
-    throw new Error(
-      'TEST_USER_EMAIL and TEST_USER_PASSWORD must be set. ' +
-        'Copy apps/e2e/.env.example to apps/e2e/.env.test and fill in the values.',
-    );
-  }
+  const { baseURL, testUserEmail: email, testUserPassword: password } = config.auth;
 
   // Ensure .auth/ directory exists before writing storageState
   mkdirSync(dirname(AUTH_STATE_PATH), { recursive: true });
@@ -30,7 +23,7 @@ export async function loginAndSaveState(): Promise<void> {
   const page = await context.newPage();
 
   try {
-    await page.goto(baseURL);
+await page.goto(baseURL);
 
     // Wait for Amplify Authenticator to hydrate before interacting with form fields
     await page.waitForSelector('[data-amplify-authenticator]', {

@@ -8,14 +8,18 @@ loadEnv({ path: resolve(import.meta.dirname, '.env.test'), override: false });
 
 import { defineConfig, devices } from '@playwright/test';
 
+// process.env values are string | undefined; webServer.env requires Record<string, string>
+const env = Object.fromEntries(
+  Object.entries(process.env).filter(([, v]) => v !== undefined),
+) as Record<string, string>;
+
 export default defineConfig({
   testDir: './tests',
 
   // Fail fast on CI if test.only was accidentally committed
   forbidOnly: !!process.env.CI,
 
-  // Retry failed tests on CI; no retries locally
-  retries: process.env.CI ? 2 : 0,
+  retries: 0,
 
   // Single worker on CI to avoid resource contention; full parallelism locally
   workers: process.env.CI ? 1 : undefined,
@@ -35,7 +39,7 @@ export default defineConfig({
   // Settings shared across all test projects
   use: {
     // Target the Vite dev server; override with BASE_URL env var (PW-02, PW-03)
-    baseURL: process.env.BASE_URL ?? 'http://localhost:5173',
+    baseURL: process.env.BASE_URL,
 
     // Collect trace on first retry; keeps artifact size manageable
     trace: 'on-first-retry',
@@ -63,16 +67,7 @@ export default defineConfig({
       url: 'http://localhost:3001/health',
       reuseExistingServer: !process.env.CI,
       timeout: 30_000,
-      env: {
-        // Spread process.env first — webServer.env does NOT auto-merge with process.env
-        ...process.env,
-        NODE_ENV: 'test',
-        DYNAMODB_TABLE: process.env.DYNAMODB_TABLE ?? 'packpixie-test',
-        LOCAL_DYNAMODB_URL:
-          process.env.LOCAL_DYNAMODB_URL ?? 'http://localhost:8000',
-        COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID ?? '',
-        COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID ?? '',
-      },
+      env: { ...env, NODE_ENV: 'test' },
     },
     {
       // Vite React SPA — dev script in apps/client/package.json is 'vite'
@@ -80,14 +75,7 @@ export default defineConfig({
       url: 'http://localhost:5173',
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
-      env: {
-        ...process.env,
-        // VITE_APP_VERSION required by apps/client/src/config.ts (requireEnv throws if missing)
-        VITE_APP_VERSION: process.env.VITE_APP_VERSION ?? 'test',
-        VITE_API_URL: process.env.VITE_API_URL ?? 'http://localhost:3001',
-        VITE_COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID ?? '',
-        VITE_COGNITO_USER_POOL_CLIENT_ID: process.env.COGNITO_CLIENT_ID ?? '',
-      },
+      env,
     },
   ],
 });

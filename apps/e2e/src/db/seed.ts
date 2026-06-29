@@ -1,11 +1,13 @@
 import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
 
+import { config } from '../config';
+
 export const TRIP_ID = 'test-trip-001';
 export const USER_ID = 'test-user-001';
 export const ITEM_ID = 'test-item-001';
 
 export async function seedTestData(client: DynamoDBClient): Promise<void> {
-  const tableName = process.env.DYNAMODB_TABLE ?? 'packpixie-test';
+  const tableName = config.db.tableName;
   const now = new Date().toISOString();
 
   // Trip metadata

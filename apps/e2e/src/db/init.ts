@@ -5,17 +5,19 @@ import {
   ResourceNotFoundException,
 } from '@aws-sdk/client-dynamodb';
 
+import { config } from '../config';
+
 export function createTestDynamoDBClient(): DynamoDBClient {
   return new DynamoDBClient({
-    region: process.env.AWS_REGION ?? 'us-east-1',
-    endpoint: process.env.LOCAL_DYNAMODB_URL ?? 'http://localhost:8000',
+    region: config.db.region,
+    endpoint: config.db.endpoint,
     // DynamoDB Local ignores credentials but the SDK requires them to be present
     credentials: { accessKeyId: 'local', secretAccessKey: 'local' },
   });
 }
 
 export async function createTable(client: DynamoDBClient): Promise<void> {
-  const tableName = process.env.DYNAMODB_TABLE ?? 'packpixie-test';
+  const tableName = config.db.tableName;
 
   await client.send(
     new CreateTableCommand({
@@ -46,7 +48,7 @@ export async function createTable(client: DynamoDBClient): Promise<void> {
 }
 
 export async function deleteTable(client: DynamoDBClient): Promise<void> {
-  const tableName = process.env.DYNAMODB_TABLE ?? 'packpixie-test';
+  const tableName = config.db.tableName;
 
   try {
     await client.send(new DeleteTableCommand({ TableName: tableName }));
