@@ -48,19 +48,20 @@ Any developer can run `pnpm test:e2e` and get a reliable green/red signal agains
 
 ## Key Decisions
 
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
-| DynamoDB Local (Docker) over AWS test table | No AWS credentials needed in CI, zero cost, fully isolated, reproducible | — Pending |
-| Real Cognito test user over auth bypass | Tests exercise the real auth flow end-to-end; bypass would miss JWT verification bugs | — Pending |
-| `apps/e2e` workspace package over root-level directory | Consistent with monorepo structure; can have its own deps, tsconfig, and scripts | — Pending |
-| GitHub Actions for CI | Project is on GitHub; native integration, no extra infra | — Pending |
-| Playwright over Cypress | Better TypeScript support, ESM native, parallel workers, network interception | — Pending |
+| Decision                                               | Rationale                                                                             | Outcome   |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------- | --------- |
+| DynamoDB Local (Docker) over AWS test table            | No AWS credentials needed in CI, zero cost, fully isolated, reproducible              | — Pending |
+| Real Cognito test user over auth bypass                | Tests exercise the real auth flow end-to-end; bypass would miss JWT verification bugs | — Pending |
+| `apps/e2e` workspace package over root-level directory | Consistent with monorepo structure; can have its own deps, tsconfig, and scripts      | — Pending |
+| GitHub Actions for CI                                  | Project is on GitHub; native integration, no extra infra                              | — Pending |
+| Playwright over Cypress                                | Better TypeScript support, ESM native, parallel workers, network interception         | — Pending |
 
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
 
 **After each phase transition** (via `/gsd-transition`):
+
 1. Requirements invalidated? → Move to Out of Scope with reason
 2. Requirements validated? → Move to Validated with phase reference
 3. New requirements emerged? → Add to Active
@@ -68,10 +69,12 @@ This document evolves at phase transitions and milestone boundaries.
 5. "What This Is" still accurate? → Update if drifted
 
 **After each milestone** (via `/gsd-complete-milestone`):
+
 1. Full review of all sections
 2. Core Value check — still the right priority?
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-27 after initialization*
+
+_Last updated: 2026-06-27 after initialization_
