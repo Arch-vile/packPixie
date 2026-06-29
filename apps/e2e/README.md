@@ -60,6 +60,29 @@ In GitHub Actions, environment variables are injected from repository secrets �
 `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`. See `.github/workflows/e2e.yml` (Phase 3)
 for the full CI pipeline.
 
+## Setting up CI
+
+### Required GitHub secrets
+
+Add the following four secrets to the repository (**Settings → Secrets and variables → Actions → New repository secret**):
+
+| Secret name | Where to find the value |
+| ----------------------------- | -------------------------------------------------------------------------------------- |
+| `COGNITO_USER_POOL_ID` | AWS Console → Cognito → User Pools → select pool → **Pool ID**. Or: `terraform output -raw cognito_user_pool_id` (run from `infra/`) |
+| `COGNITO_CLIENT_ID` | AWS Console → Cognito → User Pools → select pool → App clients → **Client ID**. Or: `terraform output -raw cognito_user_pool_client_id` (run from `infra/`) |
+| `TEST_USER_EMAIL` | The email address of the Cognito test user (same value as in your local `.env.test`) |
+| `TEST_USER_PASSWORD` | The password of the Cognito test user (same value as in your local `.env.test`) |
+
+### Branch protection
+
+The workflow job is named **e2e** under the workflow **E2E Tests**. To make it a required status check on `main`:
+
+1. Go to **Settings → Branches → Branch protection rules → main**
+2. Enable **Require status checks to pass before merging**
+3. Search for and add **`E2E Tests / e2e`**
+
+With this configured, PRs cannot merge if the E2E job fails.
+
 ## Troubleshooting
 
 **Port 8000 already in use**
