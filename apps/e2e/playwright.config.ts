@@ -24,9 +24,11 @@ export default defineConfig({
   // Single worker on CI to avoid resource contention; full parallelism locally
   workers: process.env.CI ? 1 : undefined,
 
-  // GitHub Actions annotations on CI; HTML report (opens on failure) locally
+  // GitHub Actions annotations on CI; HTML report (opens on failure) locally.
+  // Array form required on CI: 'github' (string) emits only annotations — it does not
+  // write playwright-report/ to disk, so the upload-artifact step would have nothing to upload.
   reporter: process.env.CI
-    ? 'github'
+    ? [['github'], ['html', { open: 'never', outputFolder: 'playwright-report' }]]
     : [['html', { open: 'on-failure', outputFolder: 'playwright-report' }]],
 
   // Artifact output directory (screenshots, traces)
