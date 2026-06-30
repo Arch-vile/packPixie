@@ -2,7 +2,6 @@ import { GenericContainer } from 'testcontainers';
 import type { FullConfig } from '@playwright/test';
 
 import { createTestDynamoDBClient, createTable } from './src/db/init';
-import { seedTestData } from './src/db/seed';
 import { loginAndSaveState } from './src/auth/login';
 
 export default async function globalSetup(_config: FullConfig): Promise<void> {
@@ -18,9 +17,6 @@ export default async function globalSetup(_config: FullConfig): Promise<void> {
   const dbClient = createTestDynamoDBClient();
   await createTable(dbClient);
 
-  // Step 3: Seed minimum test data
-  await seedTestData(dbClient);
-
-  // Step 4: Browser UI login — saves session to .auth/user.json
+  // Step 3: Browser UI login — saves session to .auth/user.json
   await loginAndSaveState();
 }
