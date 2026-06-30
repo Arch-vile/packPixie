@@ -48,10 +48,9 @@ cd apps/e2e && pnpm exec playwright test --ui
 2. Starts the Fastify API on port 3001 (connected to DynamoDB Local)
 3. Starts the Vite dev server on port 5173
 4. Creates the `packpixie-test` DynamoDB table with the production schema (PK/SK + GSI1)
-5. Seeds one test trip, one participant, and one packing item
-6. Logs in the Cognito test user through the browser UI and saves the session to `.auth/user.json`
-7. Runs all tests — each test starts already authenticated
-8. Deletes the DynamoDB table and cleans up containers on exit
+5. Logs in the Cognito test user through the browser UI and saves the session to `.auth/user.json`
+6. Runs all tests — each test starts already authenticated
+7. Deletes the DynamoDB table and cleans up containers on exit
 
 ## CI
 

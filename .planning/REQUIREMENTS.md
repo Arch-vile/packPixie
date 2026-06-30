@@ -53,7 +53,7 @@
 ### Baseline Tests
 
 - [ ] **TEST-01**: At least one smoke test verifies the app loads and the user can log in
-- [ ] **TEST-02**: At least one test covers the core happy path: create a trip → add an item → verify the item appears in the list
+- [ ] **TEST-02**: At least one test covers the core happy path: create a trip → verify the trip appears in the list (item addition deferred — no item API exists in v1)
 - [ ] **TEST-03**: Tests pass in both local and CI environments without code changes
 
 ## v2 Requirements
