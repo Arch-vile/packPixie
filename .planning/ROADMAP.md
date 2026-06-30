@@ -74,7 +74,7 @@ Plans:
 
 **Plans:** 1 plan
 Plans:
-- [ ] 03-PLAN.md — Fix CI reporter + create e2e.yml workflow + add CI secrets docs to README
+- [x] 03-PLAN.md — Fix CI reporter + create e2e.yml workflow + add CI secrets docs to README
 
 **UAT criteria:**
 - A push to a feature branch triggers the workflow

@@ -2,11 +2,11 @@
 
 **Project:** PackPixie E2E Testing Infrastructure
 **Initialized:** 2026-06-27
-**Current phase:** Phase 2 (complete)
+**Current phase:** Phase 3 (complete)
 
 ## Active Work
 
-None — Phase 2 complete. Ready to start Phase 3.
+None — Phase 3 complete. Ready to start Phase 4.
 
 ## Phase History
 
@@ -14,7 +14,7 @@ None — Phase 2 complete. Ready to start Phase 3.
 |-------|--------|-----------|
 | Phase 1: Playwright Package Foundation | Complete | 2026-06-27 |
 | Phase 2: Stack Orchestration + DB Init | Complete | 2026-06-28 |
-| Phase 3: GitHub Actions CI Pipeline | Not started | — |
+| Phase 3: GitHub Actions CI Pipeline | Complete | 2026-06-29 |
 | Phase 4: Baseline E2E Tests | Not started | — |
 
 ## Open Questions
@@ -31,6 +31,8 @@ None — Phase 2 complete. Ready to start Phase 3.
 | 2026-06-27 | `apps/e2e` workspace package | Consistent with monorepo structure |
 | 2026-06-27 | GitHub Actions for CI | Native GitHub integration |
 | 2026-06-27 | Playwright over Cypress | Better TypeScript/ESM support, native parallelism |
+| 2026-06-29 | testcontainers for CI DynamoDB (not services:) | Matches local setup; no services: block needed |
+| 2026-06-29 | No pnpm/browser caching in Phase 3 | Deferred per D-04; simplicity first |
 
 ---
-*Last updated: 2026-06-27 after initialization*
+*Last updated: 2026-06-29 after Phase 3 completion*

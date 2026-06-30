@@ -14,14 +14,15 @@ requirements:
   - CI-02
   - CI-03
   - CI-04
-  - CI-05
+deferred:
+  - CI-05: caching — deferred per CONTEXT.md D-04 ("None — keep the workflow simple"); cache UAT criterion from ROADMAP.md Phase 3 is superseded by D-04
 must_haves:
   truths:
     - E2E workflow triggers on push to main and on pull_request targeting main (D-01)
-    - DynamoDB Local starts via testcontainers — no services: block needed (D-02)
+    - DynamoDB Local starts via testcontainers — no services: block needed (D-02; CI-02 requirement wording says "Docker service container" but D-02 locks testcontainers approach, which supersedes the requirement wording)
     - All 12 required env vars present; the four sensitive ones come from GitHub secrets (D-03, D-09)
     - Playwright HTML report is always written to disk and uploaded as an artifact with 7-day retention (D-05)
-    - README documents the four required secrets with their sources and the branch protection requirement (CI-05)
+    - README documents the four required secrets with their sources and the branch protection requirement (documentation goal — not CI-05)
   artifacts:
     - .github/workflows/e2e.yml
     - apps/e2e/playwright.config.ts (reporter changed to array form enabling HTML output in CI)
@@ -293,13 +294,13 @@ After all three tasks complete:
 
 <success_criteria>
 - Push to main or a PR targeting main triggers the "E2E Tests" workflow (CI-01)
-- Workflow has no services: block; DynamoDB Local starts inside the job via testcontainers (CI-02)
+- Workflow has no services: block; DynamoDB Local starts inside the job via testcontainers (CI-02; requirement wording says "service container" but D-02 locks testcontainers approach)
 - All four Cognito secrets are injected as env vars at job level; the required() guard in
   apps/e2e/src/config.ts throws immediately on missing values before any test runs (CI-03)
 - playwright-report/ and test-results/ are uploaded as a single artifact with 7-day retention
   and if: always() so it runs regardless of test outcome (CI-04)
-- README.md documents all four required secrets with their AWS Console and Terraform sources,
-  how to add them to GitHub Actions, and the branch protection configuration step (CI-05)
+- README.md documents all four required secrets with their sources and the branch protection step
+- CI-05 (caching) deferred per D-04; ROADMAP.md Phase 3 caching UAT criterion is superseded by D-04
 </success_criteria>
 
 <output>
