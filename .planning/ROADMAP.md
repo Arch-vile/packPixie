@@ -95,6 +95,9 @@ Plans:
 
 **Requirements covered:** TEST-01–03
 
+**Plans:**
+- [x] 04-PLAN.md — auth smoke test + trip create/list E2E + fixtures
+
 **UAT criteria:**
 - Both test files pass locally with a real Cognito test user
 - Both test files pass in GitHub Actions CI
