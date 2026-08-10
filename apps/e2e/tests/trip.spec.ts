@@ -14,7 +14,7 @@ test('user can create a trip and see it in the list', async ({ page }) => {
   // Register the waitForResponse listener BEFORE clicking Create. Playwright's event
   // model requires the listener to be active when the request fires. Promise.all
   // ensures both the listener registration and the click happen atomically.
-  await Promise.all([
+  const [response] = await Promise.all([
     page.waitForResponse(
       (r) =>
         r.url().includes('/api/trips') &&
@@ -22,6 +22,14 @@ test('user can create a trip and see it in the list', async ({ page }) => {
     ),
     page.getByRole('button', { name: 'Create' }).click(),
   ]);
+
+  // Fail fast with diagnostic info if the API returned an error
+  if (!response.ok()) {
+    const body = await response.text();
+    throw new Error(
+      `POST /api/trips returned HTTP ${response.status()}: ${body}`,
+    );
+  }
 
   // After the POST resolves, TripList calls getTrips() before updating state.
   // Playwright's built-in auto-waiting in toBeVisible() covers the GET round-trip.

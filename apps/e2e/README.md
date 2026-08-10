@@ -44,7 +44,7 @@ cd apps/e2e && pnpm exec playwright test --ui
 
 `pnpm test:e2e` automatically performs all these steps before any test runs:
 
-1. Starts DynamoDB Local in Docker on host port 8000 (via testcontainers)
+1. Starts DynamoDB Local in Docker on host port 8000 (via testcontainers), with `-sharedDb` so the API and the test harness share one database (see Troubleshooting for why this flag is mandatory)
 2. Starts the Fastify API on port 3001 (connected to DynamoDB Local)
 3. Starts the Vite dev server on port 5173
 4. Creates the `packpixie-test` DynamoDB table with the production schema (PK/SK + GSI1)
@@ -107,3 +107,29 @@ Fix: fill in both Cognito values in `.env.test` before running tests.
 Verify that `TEST_USER_EMAIL` and `TEST_USER_PASSWORD` in `.env.test` match the user
 you created in step 2. The permanent password must have been set with
 `admin-set-user-password --permanent` — a temporary password will fail.
+
+**API returns 500 "Cannot do operations on a non-existent table"**
+This is the failure mode `-sharedDb` prevents — if you remove that flag from
+`global-setup.ts`, expect it to return.
+
+DynamoDB Local in `-inMemory` mode, **without** `-sharedDb`, does not keep one database.
+It silently partitions storage into a separate hidden database per **(AWS access key ID +
+region)**. A table created under one identity is invisible to a client using a different
+one, even on the same `localhost:8000`.
+
+Our two clients derive that identity from different sources:
+
+- **Test harness** (`src/db/init.ts`) pins explicit fake credentials
+  `{ accessKeyId: 'local', secretAccessKey: 'local' }` and region `AWS_REGION`. It creates
+  the table in namespace `("local", AWS_REGION)`.
+- **API** (`apps/api/src/lib/dynamodb.ts`) sets **no** credentials and falls through to the
+  default AWS provider chain (env vars → `~/.aws/credentials` → SSO/instance role), with
+  region defaulting to `us-east-1`. On a machine with real AWS credentials, it lands in a
+  different namespace — so the table the harness created "does not exist" from its view, and
+  the first write (trip creation) 500s.
+
+`-sharedDb` collapses the instance to a single database that every client shares regardless
+of credentials or region, eliminating the split. It is scoped to the ephemeral, in-memory
+test container only — it does **not** affect any DynamoDB you run for local app development
+(separate process, separate data, destroyed after the run). The auth test passes without the
+flag because it never touches DynamoDB; only the trip test exercises a real DB write.
