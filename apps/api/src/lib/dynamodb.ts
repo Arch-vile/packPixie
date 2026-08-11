@@ -8,6 +8,12 @@ export function createDynamoDBClient() {
     // Only set endpoint if LOCAL_DYNAMODB_URL is defined, otherwise use default AWS endpoint
     ...(process.env.LOCAL_DYNAMODB_URL && {
       endpoint: process.env.LOCAL_DYNAMODB_URL,
+      // DynamoDB Local ignores credentials, but the SDK still requires some to sign
+      // requests. Supply dummy creds so local/E2E runs don't depend on real AWS
+      // credentials in the environment (in CI they're stripped by Turbo's strict
+      // env mode). Production (no LOCAL_DYNAMODB_URL) falls through to the default
+      // provider chain — the Lambda execution role.
+      credentials: { accessKeyId: 'local', secretAccessKey: 'local' },
     }),
   });
 
