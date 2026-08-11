@@ -141,3 +141,16 @@ vite.config.ts.timestamp-*
 infra/.terraform
 .DS_Store
 infra/placeholder.zip
+
+# GSD framework (installed dev tool — regenerate with `npx @opengsd/gsd-core@latest`).
+# Kept local-only, not committed. Project planning content under .planning/ IS tracked.
+/.github/gsd-core/
+/.github/agents/gsd-*.agent.md
+/.github/skills/gsd-*/
+/.github/hooks/gsd-session.json
+/.github/.gsd-profile
+/.github/gsd-install-state.json
+/.github/gsd-file-manifest.json
+/.github/copilot-instructions.md
+/.claude/gsd-core/
+/AGENTS.md
