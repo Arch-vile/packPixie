@@ -18,6 +18,14 @@
     },
     "clean": {
       "cache": false
+    },
+    "e2e": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      // Test env comes from apps/e2e/.env.test (loaded in-process by
+      // playwright.config.ts). Only CI must pass through Turbo's strict env
+      // mode — Playwright reads it for reporter/workers/forbidOnly.
+      "passThroughEnv": ["CI"]
     }
   }
 }

@@ -4,3 +4,8 @@ packages:
 
 onlyBuiltDependencies:
   - esbuild
+
+# Reject packages published less than 2 weeks ago to reduce supply chain attack risk.
+# 14 days * 24 hours * 60 minutes = 20160 minutes
+minimumReleaseAge: 20160
+minimumReleaseAgeStrict: true

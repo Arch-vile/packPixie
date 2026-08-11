@@ -155,7 +155,7 @@ export function TripList({ userEmail, trips, onTripsChange }: TripListProps) {
           {trips.map((trip) => (
             <li key={trip.tripId} className="trip-item">
               <div className="trip-item-main">
-                <span className="trip-name">{trip.tripName}</span>
+                <span className="trip-name" data-testid="trip-name">{trip.tripName}</span>
                 <span className="trip-date">
                   {new Date(trip.createdAt).toLocaleDateString()}
                 </span>

@@ -113,3 +113,70 @@ resource "aws_secretsmanager_secret_version" "cognito_user_pool_client_id" {
   secret_id     = aws_secretsmanager_secret.cognito_user_pool_client_id.id
   secret_string = aws_cognito_user_pool_client.web.id
 }
+
+# ---------------------------------------------------------------------------
+# E2E test user
+# ---------------------------------------------------------------------------
+# Provisioned declaratively so local dev and CI use the SAME credentials, read
+# from Secrets Manager. This avoids granting the CI IAM user standing
+# cognito-idp:Admin* permissions or recreating the user on every run — the CI
+# key already has secretsmanager:GetSecretValue on pack-pixie/*.
+locals {
+  e2e_test_user_email = "e2e-ci@packpixie.test"
+}
+
+# Permanent password satisfying the pool policy (>=8, upper, lower, number).
+# special = false because the policy requires no symbols and it keeps the value
+# safe to drop into .env.test / shell without escaping.
+resource "random_password" "e2e_test_user" {
+  length      = 24
+  upper       = true
+  lower       = true
+  numeric     = true
+  special     = false
+  min_upper   = 2
+  min_lower   = 2
+  min_numeric = 2
+}
+
+resource "aws_cognito_user" "e2e_test_user" {
+  user_pool_id   = aws_cognito_user_pool.main.id
+  username       = local.e2e_test_user_email
+  password       = random_password.e2e_test_user.result
+  message_action = "SUPPRESS"
+
+  attributes = {
+    email          = local.e2e_test_user_email
+    email_verified = "true"
+  }
+}
+
+resource "aws_secretsmanager_secret" "e2e_test_user_email" {
+  name        = "pack-pixie/e2e-test-user-email"
+  description = "E2E Cognito test user email for Pack Pixie"
+
+  tags = {
+    Application = "PackPixie"
+    ManagedBy   = "Terraform"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "e2e_test_user_email" {
+  secret_id     = aws_secretsmanager_secret.e2e_test_user_email.id
+  secret_string = local.e2e_test_user_email
+}
+
+resource "aws_secretsmanager_secret" "e2e_test_user_password" {
+  name        = "pack-pixie/e2e-test-user-password"
+  description = "E2E Cognito test user password for Pack Pixie"
+
+  tags = {
+    Application = "PackPixie"
+    ManagedBy   = "Terraform"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "e2e_test_user_password" {
+  secret_id     = aws_secretsmanager_secret.e2e_test_user_password.id
+  secret_string = random_password.e2e_test_user.result
+}

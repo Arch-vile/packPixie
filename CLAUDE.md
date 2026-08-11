@@ -37,6 +37,7 @@ Read these before making architectural changes:
 - API routes are split into public (no auth) and protected (auth required) scopes in `apps/api/src/routes/api.ts`
 - Fastify plugins that need to share hooks/decorators with sibling routes must be wrapped with `fastify-plugin`
 - Do not remove TODO comments from code
+- Leave nothing unused behind: when a change makes something obsolete (secrets, env vars, IAM permissions, config, files, dependencies), remove it as part of the same change. Always plan the required cleanup, not just the addition
 - In `apps/api`, use `.js` extensions on relative imports (e.g. `from '../config.js'`) — required for ESM at runtime
 - CLAUDE.md is the single place for agent instructions — do not use memory files
 - Keep CLAUDE.md lean: commands, conventions, pointers to docs. Do not duplicate architecture or application details here — those belong in the dedicated documentation files listed above

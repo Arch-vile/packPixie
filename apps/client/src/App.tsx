@@ -45,7 +45,7 @@ function AppContent({ userEmail, onSignOut }: AppContentProps) {
         <ApiConnectionStatus />
       </div>
       <h1>PackPixie</h1>
-      <p className="signed-in-label">Signed in as {userEmail}</p>
+      <p className="signed-in-label" data-testid="signed-in-label">Signed in as {userEmail}</p>
       <button onClick={onSignOut} className="sign-out-btn">
         Sign out
       </button>

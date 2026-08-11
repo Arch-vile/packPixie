@@ -125,6 +125,9 @@ dist
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
+# Local editor settings (machine-specific: auto-approve rules, absolute paths)
+/.vscode/settings.json
+
 # yarn v3
 .pnp.*
 .yarn/*
@@ -141,3 +144,17 @@ vite.config.ts.timestamp-*
 infra/.terraform
 .DS_Store
 infra/placeholder.zip
+
+# GSD framework (installed dev tool — regenerate with `npx @opengsd/gsd-core@latest`).
+# Kept local-only, not committed. Project planning content under .planning/ IS tracked.
+/.github/gsd-core/
+/.github/scripts/
+/.github/agents/gsd-*.agent.md
+/.github/skills/gsd-*/
+/.github/hooks/gsd-session.json
+/.github/.gsd-profile
+/.github/gsd-install-state.json
+/.github/gsd-file-manifest.json
+/.github/copilot-instructions.md
+/.claude/gsd-core/
+/AGENTS.md
