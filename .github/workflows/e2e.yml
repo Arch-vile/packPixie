@@ -10,23 +10,6 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
 
-    env:
-      # Cognito — real user pool via GitHub secrets (D-03)
-      COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
-      COGNITO_CLIENT_ID: ${{ secrets.COGNITO_CLIENT_ID }}
-      TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
-      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
-      # Vite client reads VITE_-prefixed names from the same two secrets (D-09)
-      VITE_COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
-      VITE_COGNITO_USER_POOL_CLIENT_ID: ${{ secrets.COGNITO_CLIENT_ID }}
-      # Hardcoded values — no secrets needed (D-09)
-      AWS_REGION: us-east-1
-      DYNAMODB_TABLE: packpixie-test
-      LOCAL_DYNAMODB_URL: http://localhost:8000
-      BASE_URL: http://localhost:5173
-      VITE_API_URL: http://localhost:3001
-      VITE_APP_VERSION: test
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -46,6 +29,25 @@ jobs:
 
       - name: Build model package
         run: pnpm --filter model build
+
+      # AWS creds let setup-env.sh read Cognito IDs from Secrets Manager and
+      # create the Cognito test user — same secrets deploy-api.yml uses.
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # Generates apps/e2e/.env.test (Cognito IDs from Secrets Manager, other values
+      # from .env.example defaults) and provisions the Cognito test user. Playwright
+      # loads .env.test in-process, so these values reach the API/client webServers
+      # regardless of Turbo's strict env mode.
+      - name: Generate .env.test and provision Cognito test user
+        env:
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+        run: bash apps/e2e/setup-env.sh
 
       - name: Install Playwright browsers
         run: pnpm --filter @packpixie/e2e run install:browsers

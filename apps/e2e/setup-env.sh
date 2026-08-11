@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Setup script for E2E test environment.
-# Pulls Cognito values from Terraform, writes .env.test, and creates the Cognito test user.
+# Pulls Cognito values from AWS Secrets Manager, writes .env.test, and creates the
+# Cognito test user. Requires AWS credentials in the environment (locally: your
+# configured profile/SSO; in CI: aws-actions/configure-aws-credentials). No Terraform
+# state needed — reads the same secrets deploy-api.yml consumes.
 #
 # Usage:
 #   TEST_USER_EMAIL=you@example.com TEST_USER_PASSWORD=YourPass123! ./apps/e2e/setup-env.sh
@@ -26,19 +29,30 @@ if [[ ! -f "$ENV_FILE" ]]; then
   echo "✓ Created $ENV_FILE from .env.example"
 fi
 
-# 2. Pull Cognito values from Terraform
-echo "→ Reading Terraform outputs..."
-POOL_ID=$(cd "$REPO_ROOT/infra" && terraform output -raw cognito_user_pool_id)
-CLIENT_ID=$(cd "$REPO_ROOT/infra" && terraform output -raw cognito_user_pool_client_id)
-REGION=$(cd "$REPO_ROOT/infra" && terraform output -raw cognito_region)
+# 2. Pull Cognito values from AWS Secrets Manager (same secrets deploy-api.yml uses).
+#    No Terraform state required — works identically locally and in CI.
+REGION="${AWS_REGION:-us-east-1}"
+echo "→ Reading Cognito IDs from AWS Secrets Manager (region $REGION)..."
+POOL_ID=$(aws secretsmanager get-secret-value --region "$REGION" \
+  --secret-id pack-pixie/cognito-user-pool-id --query SecretString --output text)
+CLIENT_ID=$(aws secretsmanager get-secret-value --region "$REGION" \
+  --secret-id pack-pixie/cognito-user-pool-client-id --query SecretString --output text)
 
-# 3. Write values into .env.test
-sed -i '' "s|^COGNITO_USER_POOL_ID=.*|COGNITO_USER_POOL_ID=$POOL_ID|"                           "$ENV_FILE"
-sed -i '' "s|^COGNITO_CLIENT_ID=.*|COGNITO_CLIENT_ID=$CLIENT_ID|"                               "$ENV_FILE"
-sed -i '' "s|^VITE_COGNITO_USER_POOL_ID=.*|VITE_COGNITO_USER_POOL_ID=$POOL_ID|"                 "$ENV_FILE"
-sed -i '' "s|^VITE_COGNITO_USER_POOL_CLIENT_ID=.*|VITE_COGNITO_USER_POOL_CLIENT_ID=$CLIENT_ID|" "$ENV_FILE"
-sed -i '' "s|^TEST_USER_EMAIL=.*|TEST_USER_EMAIL=$EMAIL|"                                        "$ENV_FILE"
-sed -i '' "s|^TEST_USER_PASSWORD=.*|TEST_USER_PASSWORD=$PASSWORD|"                              "$ENV_FILE"
+# 3. Write values into .env.test.
+#    `sed -i ''` is BSD/macOS-only and errors under GNU sed (Linux CI runners), so route
+#    each edit through a temp file — portable across both.
+set_env() {
+  local key="$1" value="$2" tmp
+  tmp="$(mktemp)"
+  sed "s|^${key}=.*|${key}=${value}|" "$ENV_FILE" > "$tmp" && mv "$tmp" "$ENV_FILE"
+}
+
+set_env COGNITO_USER_POOL_ID "$POOL_ID"
+set_env COGNITO_CLIENT_ID "$CLIENT_ID"
+set_env VITE_COGNITO_USER_POOL_ID "$POOL_ID"
+set_env VITE_COGNITO_USER_POOL_CLIENT_ID "$CLIENT_ID"
+set_env TEST_USER_EMAIL "$EMAIL"
+set_env TEST_USER_PASSWORD "$PASSWORD"
 
 echo "✓ .env.test updated"
 
