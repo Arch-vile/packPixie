@@ -30,8 +30,8 @@ jobs:
       - name: Build model package
         run: pnpm --filter model build
 
-      # AWS creds let setup-env.sh read Cognito IDs from Secrets Manager and
-      # create the Cognito test user — same secrets deploy-api.yml uses.
+      # AWS creds let setup-env.sh read the Cognito config and test-user
+      # credentials from Secrets Manager — same secrets the deploy workflows use.
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -39,14 +39,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      # Generates apps/e2e/.env.test (Cognito IDs from Secrets Manager, other values
-      # from .env.example defaults) and provisions the Cognito test user. Playwright
-      # loads .env.test in-process, so these values reach the API/client webServers
-      # regardless of Turbo's strict env mode.
-      - name: Generate .env.test and provision Cognito test user
-        env:
-          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
-          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+      # Generates apps/e2e/.env.test — Cognito IDs and test-user credentials
+      # from Secrets Manager, other values from .env.example defaults. Playwright
+      # loads .env.test in-process, so these reach the API/client webServers
+      # regardless of Turbo's strict env mode. The test user itself is
+      # provisioned by Terraform (infra/cognito.tf).
+      - name: Generate .env.test from Secrets Manager
         run: bash apps/e2e/setup-env.sh
 
       - name: Install Playwright browsers
