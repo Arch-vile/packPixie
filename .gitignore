@@ -145,6 +145,7 @@ infra/placeholder.zip
 # GSD framework (installed dev tool — regenerate with `npx @opengsd/gsd-core@latest`).
 # Kept local-only, not committed. Project planning content under .planning/ IS tracked.
 /.github/gsd-core/
+/.github/scripts/
 /.github/agents/gsd-*.agent.md
 /.github/skills/gsd-*/
 /.github/hooks/gsd-session.json
