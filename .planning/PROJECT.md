@@ -8,6 +8,19 @@ Playwright end-to-end testing infrastructure for the packPixie application — a
 
 Any developer can run `pnpm test:e2e` and get a reliable green/red signal against a real, fully initialized application stack.
 
+## Current Milestone: v2.0 Packing Table MVP
+
+**Goal:** A participant can open a trip and manage its shared packing table — the first genuinely usable slice of the actual PackPixie product.
+
+**Target features:**
+- Enter a trip (trip detail page) with a single-query load of trip meta, participants, and items
+- Item table CRUD: Name, Quantity, Weight, PackedBy, Status, Category, Consumable
+- Packing view defaulting to `PackedBy = me`, with a status filter and show-all toggle
+- Shared editing (any participant edits any row) with cheap correctness rules
+- Remove the leftover `Comments` scaffold; extend E2E coverage to the item table
+
+**Deferred to later milestones:** UsedBy / usage sets · Distribution + fairness algorithm · copy-a-trip reuse flow · Summary section · cross-user edit confirmation · full filter bar + search
+
 ## Context
 
 - **Existing stack**: Fastify 5 API (Lambda in prod / HTTP locally), React 19 + Vite client, DynamoDB single-table, Cognito auth — all in a pnpm + Turbo monorepo
@@ -38,7 +51,15 @@ Any developer can run `pnpm test:e2e` and get a reliable green/red signal agains
 
 ### Active
 
-(None — next milestone TBD)
+<!-- v2.0 Packing Table MVP — formalized with REQ-IDs in REQUIREMENTS.md -->
+
+- [ ] Participant can open a trip and view its packing table (single-query load)
+- [ ] Participant can add, edit, and delete item rows (Name, Quantity, Weight, PackedBy, Status, Category, Consumable)
+- [ ] New rows default PackedBy to the current user
+- [ ] Packing view defaults to `PackedBy = me` with a status filter and a show-all toggle
+- [ ] Any participant can edit any row; `packed` requires PackedBy; clearing PackedBy resets Status
+- [ ] Remove the `Comments` scaffold (endpoint + client component)
+- [ ] E2E suite covers the item table happy path
 
 ### Out of Scope
 
@@ -78,4 +99,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-08-11 after v1.0 milestone_
+_Last updated: 2026-08-11 after starting milestone v2.0 Packing Table MVP_
