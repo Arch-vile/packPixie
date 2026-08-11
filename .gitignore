@@ -125,6 +125,9 @@ dist
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
+# Local editor settings (machine-specific: auto-approve rules, absolute paths)
+/.vscode/settings.json
+
 # yarn v3
 .pnp.*
 .yarn/*
