@@ -8,26 +8,30 @@ setup below.
 
 - **Docker** — required for DynamoDB Local, started automatically via testcontainers
 - **Node.js ≥ 20.11** and **pnpm ≥ 10** (standard repo requirements)
-- A deployed PackPixie Cognito User Pool (dev environment pool is fine)
+- A deployed PackPixie Cognito User Pool (the E2E test user is provisioned by Terraform — see `infra/cognito.tf`)
+- AWS credentials configured locally with `secretsmanager:GetSecretValue` on `pack-pixie/*` (used by `setup-env.sh`)
 
 ## One-Time Setup
 
-### 1. Configure environment variables and create the test user
+### 1. Configure environment variables
 
-Run `setup-env.sh` from the e2e root — it pulls Cognito values from Terraform, writes `.env.test`, and creates the Cognito test user in one step:
+Run `setup-env.sh` — it reads the Cognito IDs and the test-user credentials from AWS
+Secrets Manager and writes `.env.test`. Requires AWS credentials in your environment
+(a configured profile/SSO with `secretsmanager:GetSecretValue` on `pack-pixie/*`):
 
 ```bash
-./apps/e2e/setup-env.sh you@example.com YourPass123!
+./apps/e2e/setup-env.sh
 ```
 
-The script is idempotent — safe to re-run if you need to update credentials.
+The test user is provisioned by Terraform (`infra/cognito.tf`) — you don't create it
+manually. The script is idempotent; re-run it any time to refresh `.env.test`.
 
-| Variable               | Description                                       |
-| ---------------------- | ------------------------------------------------- |
-| `COGNITO_USER_POOL_ID` | Pulled automatically from `terraform output`      |
-| `COGNITO_CLIENT_ID`    | Pulled automatically from `terraform output`      |
-| `TEST_USER_EMAIL`      | First argument (or `TEST_USER_EMAIL` env var)     |
-| `TEST_USER_PASSWORD`   | Second argument (or `TEST_USER_PASSWORD` env var) |
+| Variable               | Source                                                   |
+| ---------------------- | -------------------------------------------------------- |
+| `COGNITO_USER_POOL_ID` | Secrets Manager `pack-pixie/cognito-user-pool-id`        |
+| `COGNITO_CLIENT_ID`    | Secrets Manager `pack-pixie/cognito-user-pool-client-id` |
+| `TEST_USER_EMAIL`      | Secrets Manager `pack-pixie/e2e-test-user-email`         |
+| `TEST_USER_PASSWORD`   | Secrets Manager `pack-pixie/e2e-test-user-password`      |
 
 Leave `DYNAMODB_TABLE`, `LOCAL_DYNAMODB_URL`, `VITE_APP_VERSION`, and `VITE_API_URL`
 at their default values unless you have a specific reason to change them.
@@ -54,23 +58,23 @@ cd apps/e2e && pnpm exec playwright test --ui
 
 ## CI
 
-In GitHub Actions, environment variables are injected from repository secrets — no
-`.env.test` file is used. Required secrets: `TEST_USER_EMAIL`, `TEST_USER_PASSWORD`,
-`COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`. See `.github/workflows/e2e.yml` (Phase 3)
-for the full CI pipeline.
+In GitHub Actions the workflow configures AWS credentials and runs `setup-env.sh`,
+generating `.env.test` from Secrets Manager exactly as it does locally. The only
+repository secrets required are `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. See
+`.github/workflows/e2e.yml` for the full CI pipeline.
 
 ## Setting up CI
 
 ### Required GitHub secrets
 
-Add the following four secrets to the repository (**Settings → Secrets and variables → Actions → New repository secret**):
+The E2E workflow only needs AWS credentials — it reads everything else from Secrets Manager. Add these (**Settings → Secrets and variables → Actions → New repository secret**):
 
 | Secret name | Where to find the value |
 | ----------------------------- | -------------------------------------------------------------------------------------- |
-| `COGNITO_USER_POOL_ID` | AWS Console → Cognito → User Pools → select pool → **Pool ID**. Or: `terraform output -raw cognito_user_pool_id` (run from `infra/`) |
-| `COGNITO_CLIENT_ID` | AWS Console → Cognito → User Pools → select pool → App clients → **Client ID**. Or: `terraform output -raw cognito_user_pool_client_id` (run from `infra/`) |
-| `TEST_USER_EMAIL` | The email address of the Cognito test user (same value as in your local `.env.test`) |
-| `TEST_USER_PASSWORD` | The password of the Cognito test user (same value as in your local `.env.test`) |
+| `AWS_ACCESS_KEY_ID` | CI IAM user key: `terraform output github_actions_access_key_id` (run from `infra/`) |
+| `AWS_SECRET_ACCESS_KEY` | `terraform output -raw github_actions_secret_access_key` (run from `infra/`) |
+
+The Cognito IDs and test-user credentials live in AWS Secrets Manager under `pack-pixie/*` (provisioned by Terraform), so they are **not** GitHub secrets — the IAM user's existing `secretsmanager:GetSecretValue` on `pack-pixie/*` covers them.
 
 ### Branch protection
 
@@ -104,9 +108,9 @@ Playwright's webServer health check then times out after 30s with a generic erro
 Fix: fill in both Cognito values in `.env.test` before running tests.
 
 **Cognito login times out or fails**
-Verify that `TEST_USER_EMAIL` and `TEST_USER_PASSWORD` in `.env.test` match the user
-you created in step 2. The permanent password must have been set with
-`admin-set-user-password --permanent` — a temporary password will fail.
+Verify that `TEST_USER_EMAIL` and `TEST_USER_PASSWORD` in `.env.test` match the
+Terraform-provisioned test user (stored in Secrets Manager under
+`pack-pixie/e2e-test-user-*`). Re-run `setup-env.sh` to refresh them.
 
 **API returns 500 "Cannot do operations on a non-existent table"**
 This is the failure mode `-sharedDb` prevents — if you remove that flag from
@@ -117,16 +121,17 @@ It silently partitions storage into a separate hidden database per **(AWS access
 region)**. A table created under one identity is invisible to a client using a different
 one, even on the same `localhost:8000`.
 
-Our two clients derive that identity from different sources:
+Both clients now pin the same fake identity, but `-sharedDb` guarantees a single database
+regardless of any future credential or region drift:
 
-- **Test harness** (`src/db/init.ts`) pins explicit fake credentials
-  `{ accessKeyId: 'local', secretAccessKey: 'local' }` and region `AWS_REGION`. It creates
-  the table in namespace `("local", AWS_REGION)`.
-- **API** (`apps/api/src/lib/dynamodb.ts`) sets **no** credentials and falls through to the
-  default AWS provider chain (env vars → `~/.aws/credentials` → SSO/instance role), with
-  region defaulting to `us-east-1`. On a machine with real AWS credentials, it lands in a
-  different namespace — so the table the harness created "does not exist" from its view, and
-  the first write (trip creation) 500s.
+- **Test harness** (`src/db/init.ts`) pins fake credentials
+  `{ accessKeyId: 'local', secretAccessKey: 'local' }` and region `AWS_REGION`, creating the
+  table in namespace `("local", AWS_REGION)`.
+- **API** (`apps/api/src/lib/dynamodb.ts`) pins the same fake credentials whenever
+  `LOCAL_DYNAMODB_URL` is set, so it shares that namespace. (In production — no
+  `LOCAL_DYNAMODB_URL` — it uses the Lambda execution role via the default provider chain.)
+  Historically the API used the default chain here too, which on a machine with real AWS
+  credentials landed it in a *different* namespace — the original cause of this 500.
 
 `-sharedDb` collapses the instance to a single database that every client shares regardless
 of credentials or region, eliminating the split. It is scoped to the ephemeral, in-memory
