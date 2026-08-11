@@ -16,28 +16,29 @@ Any developer can run `pnpm test:e2e` and get a reliable green/red signal agains
 - **Database**: DynamoDB Local (Docker) provides a fresh, isolated table per test run — no AWS charges, no cross-run contamination
 - **CI target**: GitHub Actions with DynamoDB Local as a service container
 - **Local dev**: Tests should run locally with a single command; Docker required for DynamoDB Local
+- **Current state**: v1.0 shipped 2026-08-11 (PR #12 merged to `main`) — 2 Playwright specs (auth smoke + trip create→list) run green locally and in GitHub Actions. Credentials flow through AWS Secrets Manager (`setup-env.sh`); the GSD framework is a local-only dev tool (gitignored).
 
 ## Requirements
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ `apps/e2e` workspace package with Playwright configured (TypeScript, ESM) — v1.0
+- ✓ pnpm workspace recognizes `apps/e2e`; `pnpm test:e2e` runs from repo root — v1.0
+- ✓ DynamoDB Local starts before tests and is torn down after — v1.0 (via testcontainers, not a raw Docker service)
+- ✓ Global setup creates the required DynamoDB table — v1.0 (seeding dropped — tests self-provision through the UI)
+- ✓ Global teardown is idempotent across reruns — v1.0
+- ✓ Fastify API starts in test mode pointing at DynamoDB Local — v1.0
+- ✓ Vite dev server starts in test mode pointing at local API — v1.0
+- ✓ Tests authenticate using a real Cognito test user — v1.0 (user provisioned by Terraform; creds read from AWS Secrets Manager)
+- ✓ GitHub Actions runs the E2E suite on push to `main` and on PRs — v1.0
+- ✓ CI uses DynamoDB Local via testcontainers (no real AWS DynamoDB) — v1.0
+- ✓ Cognito test-user credentials sourced securely in CI — v1.0 (Secrets Manager via setup-env.sh; only AWS creds are GitHub secrets)
+- ✓ Smoke test covers the core happy path (create trip → verify in list) — v1.0 ("add item" dropped — no item API in v1)
+- ✓ Tests pass both locally and in CI without code changes — v1.0
 
 ### Active
 
-- [ ] `apps/e2e` workspace package exists with Playwright configured (TypeScript, ESM)
-- [ ] pnpm workspace recognizes `apps/e2e`; `pnpm test:e2e` runs from repo root
-- [ ] DynamoDB Local starts via Docker before tests and is torn down after
-- [ ] Global Playwright setup creates the required DynamoDB table and seeds minimum test data
-- [ ] Global teardown clears all test data (idempotent across reruns)
-- [ ] Fastify API starts in test mode pointing at DynamoDB Local
-- [ ] Vite dev server starts in test mode pointing at local API
-- [ ] Tests authenticate using a real Cognito test user (credentials via env vars)
-- [ ] GitHub Actions workflow runs E2E suite on push to `main` and on PRs
-- [ ] CI uses DynamoDB Local as a service container (no real AWS DynamoDB in CI)
-- [ ] Cognito test user credentials are stored as GitHub Actions secrets
-- [ ] At least one smoke test covers the core happy path (create trip → add item → verify list)
-- [ ] Tests pass both locally and in CI without code changes
+(None — next milestone TBD)
 
 ### Out of Scope
 
@@ -50,11 +51,11 @@ Any developer can run `pnpm test:e2e` and get a reliable green/red signal agains
 
 | Decision                                               | Rationale                                                                             | Outcome   |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------- | --------- |
-| DynamoDB Local (Docker) over AWS test table            | No AWS credentials needed in CI, zero cost, fully isolated, reproducible              | — Pending |
-| Real Cognito test user over auth bypass                | Tests exercise the real auth flow end-to-end; bypass would miss JWT verification bugs | — Pending |
-| `apps/e2e` workspace package over root-level directory | Consistent with monorepo structure; can have its own deps, tsconfig, and scripts      | — Pending |
-| GitHub Actions for CI                                  | Project is on GitHub; native integration, no extra infra                              | — Pending |
-| Playwright over Cypress                                | Better TypeScript support, ESM native, parallel workers, network interception         | — Pending |
+| DynamoDB Local (Docker) over AWS test table            | No AWS credentials needed in CI, zero cost, fully isolated, reproducible              | ✓ Good |
+| Real Cognito test user over auth bypass                | Tests exercise the real auth flow end-to-end; bypass would miss JWT verification bugs | ✓ Good |
+| `apps/e2e` workspace package over root-level directory | Consistent with monorepo structure; can have its own deps, tsconfig, and scripts      | ✓ Good |
+| GitHub Actions for CI                                  | Project is on GitHub; native integration, no extra infra                              | ✓ Good |
+| Playwright over Cypress                                | Better TypeScript support, ESM native, parallel workers, network interception         | ✓ Good |
 
 ## Evolution
 
@@ -77,4 +78,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-06-27 after initialization_
+_Last updated: 2026-08-11 after v1.0 milestone_
