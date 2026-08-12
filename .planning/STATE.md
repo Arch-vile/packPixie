@@ -5,8 +5,8 @@ milestone_name: Packing Table MVP
 current_phase: 6
 current_phase_name: Trip-Detail Read API & Participation Guard
 status: planning
-stopped_at: Phase 5 context gathered
-last_updated: "2026-08-12T11:02:44.755Z"
+stopped_at: Phase 6 context gathered
+last_updated: "2026-08-12T11:32:31.251Z"
 last_activity: 2026-08-12
 last_activity_desc: Roadmap for v2.0 created; 16 requirements mapped across 6 phases
 progress:
@@ -91,6 +91,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-08-12T10:06:12.480Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-shared-item-model-comments-cleanup/05-CONTEXT.md
+Last session: 2026-08-12T11:32:31.246Z
+Stopped at: Phase 6 context gathered
+Resume file: .planning/phases/06-trip-detail-read-api-participation-guard/06-CONTEXT.md
