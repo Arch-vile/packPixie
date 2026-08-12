@@ -3,7 +3,6 @@ import { Authenticator } from '@aws-amplify/ui-react';
 import type { Trip } from '@packpixie/model';
 import './App.css';
 import StatusChecker from './StatusChecker';
-import Comments from './Comments';
 import ApiConnectionStatus from './ApiConnectionStatus';
 import { Header } from './Header';
 import { TripList } from './TripList';
@@ -51,7 +50,6 @@ function AppContent({ userEmail, onSignOut }: AppContentProps) {
       </button>
       <TripList userEmail={userEmail} trips={trips} onTripsChange={setTrips} />
       <StatusChecker />
-      <Comments />
     </>
   );
 }

@@ -1,7 +1,6 @@
 import {
   DynamoDBDocumentClient,
   QueryCommand,
-  PutCommand,
   TransactWriteCommand,
   BatchWriteCommand,
 } from '@aws-sdk/lib-dynamodb';
@@ -62,52 +61,6 @@ export function apiRoutes(
         // Protected routes (auth required)
         fastify.register(async function (protected_) {
           await protected_.register(authPlugin(conf));
-
-          protected_.get('/comments', async (_request, _reply) => {
-            const result = await dynamoDBClient.send(
-              new QueryCommand({
-                TableName: conf.dynamoDBTable,
-                KeyConditionExpression: 'PK = :pk',
-                ExpressionAttributeValues: { ':pk': 'COMMENTS' },
-                ScanIndexForward: false,
-              }),
-            );
-
-            const comments = (result.Items ?? []).map((item) => ({
-              id: item.SK as string,
-              text: item.text as string,
-              createdAt: item.createdAt as string,
-            }));
-
-            return { comments };
-          });
-
-          protected_.post('/comments', async (request, reply) => {
-            const body = request.body as { text?: string };
-            const text = body?.text?.trim();
-
-            if (!text) {
-              return reply.status(400).send({ error: 'text is required' });
-            }
-
-            const now = new Date().toISOString();
-            const id = randomUUID();
-            const sk = `${now}#${id}`;
-
-            await dynamoDBClient.send(
-              new PutCommand({
-                TableName: conf.dynamoDBTable,
-                Item: {
-                  PK: 'COMMENTS',
-                  SK: sk,
-                  text,
-                  createdAt: now,
-                },
-              }),
-            );
-
-            return reply.status(201).send({ id: sk, text, createdAt: now });
-          });
 
           // Trip routes
           protected_.post<{ Body: CreateTripRequest }>(

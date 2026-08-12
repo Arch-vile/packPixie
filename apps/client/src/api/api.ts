@@ -2,8 +2,6 @@ import type {
   StatusResponse,
   CreateTripResponse,
   GetTripsResponse,
-  TripComment,
-  GetCommentsResponse,
 } from '@packpixie/model';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import config from '../config';
@@ -32,29 +30,6 @@ export async function getTrips(): Promise<GetTripsResponse> {
   const response = await fetch(`${config.apiUrl}/api/trips`, { headers });
   if (!response.ok) {
     throw new Error('Failed to load trips');
-  }
-  return response.json();
-}
-
-export async function getComments(): Promise<TripComment[]> {
-  const headers = await getAuthHeaders();
-  const response = await fetch(`${config.apiUrl}/api/comments`, { headers });
-  if (!response.ok) {
-    throw new Error('Failed to load comments');
-  }
-  const data: GetCommentsResponse = await response.json();
-  return data.comments;
-}
-
-export async function postComment(text: string): Promise<TripComment> {
-  const headers = await getAuthHeaders();
-  const response = await fetch(`${config.apiUrl}/api/comments`, {
-    method: 'POST',
-    headers: { ...headers, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to add comment');
   }
   return response.json();
 }
