@@ -38,11 +38,12 @@ created: 2026-08-12
 
 ## Per-Task Verification Map
 
-| Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
-|---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 5-01-01 | 01 | 1 | MODEL-01 | — | N/A (type declarations only) | compile / type-check | `pnpm build && pnpm type-check` | ✅ (toolchain) | ⬜ pending |
-| 5-02-01 | 02 | 2 | MODEL-02 | — | Attack surface reduced (removes two protected endpoints) | compile / build | `pnpm build && pnpm type-check` | ✅ (toolchain) | ⬜ pending |
-| 5-02-02 | 02 | 2 | MODEL-02 | — | No orphaned client callers left | grep gate | `grep -rni comment apps packages --include='*.ts' --include='*.tsx' \| grep -v node_modules \| grep -v /dist/` returns empty | ✅ | ⬜ pending |
+*Single plan (`05-01`), two tasks, both in Wave 1 (`depends_on: []`).*
+
+| Task | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
+|------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
+| Task 1 (tracer) | 05-01 | 1 | MODEL-01 | — | N/A (type declarations only) | compile / type-check | `pnpm build && pnpm type-check` | ✅ (toolchain) | ⬜ pending |
+| Task 2 (auto) | 05-01 | 1 | MODEL-02 | — | Attack surface reduced (removes two protected endpoints); no orphaned client callers left | compile / build + grep gate | `pnpm build && pnpm type-check` and `grep -rni comment apps packages --include='*.ts' --include='*.tsx' \| grep -v node_modules \| grep -v /dist/` returns empty | ✅ | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 

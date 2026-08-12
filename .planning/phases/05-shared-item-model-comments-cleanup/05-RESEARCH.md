@@ -290,9 +290,9 @@ Not applicable — no evolving external ecosystem is involved. The relevant "sta
 
 Everything else in this research is `[VERIFIED]` from files read this session.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **How is SC#2 ("both `apps/api` and `apps/client` import the new types") satisfied in Phase 5, given no app has a real consumer until Phases 6/8?**
+1. **RESOLVED (2026-08-12, plan-phase): How is SC#2 ("both `apps/api` and `apps/client` import the new types") satisfied in Phase 5, given no app has a real consumer until Phases 6/8?** — **Resolution: Option (a).** SC#2 is satisfied once `@packpixie/model` builds and both apps' `pnpm type-check` passes against the updated package (both already depend on it). No dead/token imports are added — real imports of `Item`/`TripDetailResponse` are deferred to Phases 6/8 where genuine consumers exist. Honors CLAUDE.md "leave nothing unused behind." (Original analysis retained below for context.)
    - What we know: Neither app currently imports `Item`/`TripDetailResponse` [VERIFIED: apps/api/src/routes/api.ts:9-15 imports only Status/Trip types; apps/client/src/api/api.ts:1-7 likewise]. CLAUDE.md forbids leaving unused code. The roadmap SC and MODEL-01 both use the word "consumed by both".
    - What's unclear: Whether the roadmap intends a literal import in this phase or accepts satisfaction when Phases 6/8 wire them.
    - Recommendation: Do **not** add artificial dead imports. Present the planner two clean options and pick one before writing tasks: **(a)** interpret SC#2 as met once the model package builds and both apps' `type-check` passes against the updated `@packpixie/model` (they already depend on it), deferring real imports to Phases 6/8; or **(b)** if a literal import is required, have `apps/api` type its (future) route handler return as `TripDetailResponse` and `apps/client/src/api/api.ts` add a real `getTripDetail(tripId): Promise<TripDetailResponse>` stub that will be used in Phase 6/8 — a genuine, soon-used consumer rather than dead code. Option (b) risks bleeding Phase 6/8 scope into Phase 5. Confirm intent with the roadmap owner.
