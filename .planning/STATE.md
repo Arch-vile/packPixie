@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Packing Table MVP
 status: planning
-last_updated: "2026-08-11T19:40:47.089Z"
-last_activity: 2026-08-11
+last_updated: "2026-08-12"
+last_activity: 2026-08-12
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -15,50 +15,76 @@ progress:
 
 # Project State
 
-**Project:** PackPixie E2E Testing Infrastructure
-**Initialized:** 2026-06-27
-**Current phase:** Phase 4 (complete)
+## Project Reference
 
-## Active Work
+See: .planning/PROJECT.md (updated 2026-08-11)
 
-None — Phase 4 complete. All planned phases complete.
-
-## Phase History
-
-| Phase | Status | Completed |
-|-------|--------|-----------|
-| Phase 1: Playwright Package Foundation | Complete | 2026-06-27 |
-| Phase 2: Stack Orchestration + DB Init | Complete | 2026-06-28 |
-| Phase 3: GitHub Actions CI Pipeline | Complete | 2026-06-29 |
-| Phase 4: Baseline E2E Tests | Complete | 2026-06-30 |
-
-## Open Questions
-
-- Cognito test user must be created manually before Phase 2 UAT; document clearly in README
-- Confirm `LOCAL_DYNAMODB_URL=http://localhost:8000` is the expected port for DynamoDB Local Docker image
-
-## Decisions Log
-
-| Date | Decision | Context |
-|------|----------|---------|
-| 2026-06-27 | DynamoDB Local (Docker) for test DB | No AWS credentials needed, zero cost, fully isolated |
-| 2026-06-27 | Real Cognito test user for auth | Tests exercise real auth flow end-to-end |
-| 2026-06-27 | `apps/e2e` workspace package | Consistent with monorepo structure |
-| 2026-06-27 | GitHub Actions for CI | Native GitHub integration |
-| 2026-06-27 | Playwright over Cypress | Better TypeScript/ESM support, native parallelism |
-| 2026-06-29 | testcontainers for CI DynamoDB (not services:) | Matches local setup; no services: block needed |
-| 2026-06-29 | No pnpm/browser caching in Phase 3 | Deferred per D-04; simplicity first |
-
----
-*Last updated: 2026-06-29 after Phase 3 completion*
+**Core value:** A participant can open a trip and manage its shared packing table — the first genuinely usable slice of the actual PackPixie product.
+**Current focus:** Phase 5 — Shared Item Model & Comments Cleanup
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-08-11 — Milestone v2.0 started
+Phase: 5 of 10 (Shared Item Model & Comments Cleanup) — milestone v2.0 phases 5–10
+Plan: — (roadmap created, no plans yet)
+Status: Ready to plan
+Last activity: 2026-08-12 — Roadmap for v2.0 created; 16 requirements mapped across 6 phases
 
-## Operator Next Steps
+Progress: [░░░░░░░░░░] 0%
 
-- Start the next milestone with /gsd-new-milestone
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed: 0
+- Average duration: —
+- Total execution time: —
+
+**By Phase:**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| - | - | - | - |
+
+**Recent Trend:**
+- Last 5 plans: —
+- Trend: —
+
+*Updated after each plan completion*
+
+## Accumulated Context
+
+### Decisions
+
+Decisions are logged in PROJECT.md Key Decisions table. Locked decisions affecting v2.0:
+
+- `react-router-dom` added for URL-addressable `/trips/:tripId` (Phase 8)
+- New-row `Status` defaults to unset; new-row `PackedBy` defaults to current user (Phases 7/8)
+- Unset `Weight` stored absent (blank), distinct from `0` (Phase 7)
+- Delete requires a confirmation dialog (Phase 8)
+- `UsedBy`/`Carried` kept entirely unset and excluded from typed DTOs (Phase 5)
+- Identity keys off lowercased JWT email, not `sub`/`UserId`; 404 (not 403) for non-members (Phase 6)
+
+### Pending Todos
+
+None yet.
+
+### Blockers/Concerns
+
+- Phase 7 (Item write API) is the densest pitfall cluster — reserved words (`Status`/`Name`), REMOVE-vs-SET, numeric coercion, `attribute_exists`, atomic clear-and-reset. Flag for deeper discuss during planning.
+- Phase 8 router-vs-`useState` (locked to react-router) and inline-edit React state model (keying, focus, optimistic reconcile) warrant a design pass.
+- Phase 10 second-participant strategy (trip-create `participantEmails` vs direct DynamoDB Local seeding) should be decided deliberately before writing the spec.
+
+## Deferred Items
+
+Items acknowledged and carried forward:
+
+| Category | Item | Status | Deferred At |
+|----------|------|--------|-------------|
+| Usage/Distribution | `UsedBy` sets, Distribution/fairness, split-carry | Deferred to v2.x | v2.0 scope |
+| Reuse/Summary | Copy-a-trip flow, Summary section | Deferred to v2.x | v2.0 scope |
+| Collaboration/Filtering | Cross-user edit confirmation, full filter bar + search | Deferred to v2.x | v2.0 scope |
+
+## Session Continuity
+
+Last session: 2026-08-12
+Stopped at: ROADMAP.md + STATE.md written; REQUIREMENTS.md traceability populated
+Resume file: None

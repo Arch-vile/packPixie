@@ -81,28 +81,36 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MODEL-01 | TBD | Pending |
-| MODEL-02 | TBD | Pending |
-| TRIP-01 | TBD | Pending |
-| TRIP-02 | TBD | Pending |
-| TRIP-03 | TBD | Pending |
-| ITEM-01 | TBD | Pending |
-| ITEM-02 | TBD | Pending |
-| ITEM-03 | TBD | Pending |
-| ITEM-04 | TBD | Pending |
-| ITEM-05 | TBD | Pending |
-| ITEM-06 | TBD | Pending |
-| VIEW-01 | TBD | Pending |
-| VIEW-02 | TBD | Pending |
-| VIEW-03 | TBD | Pending |
-| E2E-01 | TBD | Pending |
-| E2E-02 | TBD | Pending |
+| MODEL-01 | Phase 5 | Pending |
+| MODEL-02 | Phase 5 | Pending |
+| TRIP-01 | Phase 8 | Pending |
+| TRIP-02 | Phase 6 | Pending |
+| TRIP-03 | Phase 6 | Pending |
+| ITEM-01 | Phase 8 | Pending |
+| ITEM-02 | Phase 8 | Pending |
+| ITEM-03 | Phase 8 | Pending |
+| ITEM-04 | Phase 7 | Pending |
+| ITEM-05 | Phase 7 | Pending |
+| ITEM-06 | Phase 7 | Pending |
+| VIEW-01 | Phase 9 | Pending |
+| VIEW-02 | Phase 9 | Pending |
+| VIEW-03 | Phase 9 | Pending |
+| E2E-01 | Phase 10 | Pending |
+| E2E-02 | Phase 10 | Pending |
 
 **Coverage:**
 - v1 requirements: 16 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 16 ⚠️
+- Mapped to phases: 16 ✓
+- Unmapped: 0
+
+**Phase distribution:**
+- Phase 5 (Shared Item Model & Comments Cleanup): MODEL-01, MODEL-02
+- Phase 6 (Trip-Detail Read API & Participation Guard): TRIP-02, TRIP-03
+- Phase 7 (Item Write API & Server-Authoritative Rules): ITEM-04, ITEM-05, ITEM-06
+- Phase 8 (Trip-Detail Inline-Edit Table): TRIP-01, ITEM-01, ITEM-02, ITEM-03
+- Phase 9 (Packing View Filters): VIEW-01, VIEW-02, VIEW-03
+- Phase 10 (E2E Item-Table Coverage): E2E-01, E2E-02
 
 ---
 *Requirements defined: 2026-08-12*
-*Last updated: 2026-08-12 after initial definition*
+*Last updated: 2026-08-12 after roadmap creation (traceability populated)*
