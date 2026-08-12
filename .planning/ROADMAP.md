@@ -41,7 +41,8 @@ Full detail: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
   2. Both `apps/api` and `apps/client` import the new types and `pnpm type-check` passes across the monorepo.
   3. The Comments scaffold is fully removed — comment API routes, `Comments.tsx`, the comment model, and client comment API functions — with no dangling references.
   4. `pnpm build` is green with nothing unused left behind.
-**Plans**: TBD
+**Plans**: 1 plan
+- [ ] 05-01-item-model-comments-cleanup-PLAN.md — Land the Item/TripDetailResponse contract in @packpixie/model and fully remove the dead Comments scaffold; green build + type-check
 
 ### Phase 6: Trip-Detail Read API & Participation Guard
 **Goal**: A single-query trip-detail read endpoint returns the packing snapshot, gated by an email-keyed participation guard that returns 404 to non-members.
@@ -105,7 +106,7 @@ Phases execute in numeric order: 5 → 6 → 7 → 8 → 9 → 10
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 5. Shared Item Model & Comments Cleanup | v2.0 | 0/TBD | Not started | - |
+| 5. Shared Item Model & Comments Cleanup | v2.0 | 0/1 | Not started | - |
 | 6. Trip-Detail Read API & Participation Guard | v2.0 | 0/TBD | Not started | - |
 | 7. Item Write API & Server-Authoritative Rules | v2.0 | 0/TBD | Not started | - |
 | 8. Trip-Detail Inline-Edit Table (UI) | v2.0 | 0/TBD | Not started | - |
