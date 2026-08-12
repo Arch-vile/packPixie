@@ -9,8 +9,8 @@ Requirements for this milestone (v2.0). Each maps to exactly one roadmap phase.
 
 ### Shared Model & Cleanup
 
-- [ ] **MODEL-01**: A shared `Item` type and a trip-detail response DTO exist in `@packpixie/model`, consumed by both api and client (`UsedBy`/`Carried` excluded from the typed DTOs)
-- [ ] **MODEL-02**: The `Comments` scaffold is fully removed — API routes, `Comments.tsx`, the comment model, and client api functions — with `pnpm type-check` and `pnpm build` green
+- [x] **MODEL-01**: A shared `Item` type and a trip-detail response DTO exist in `@packpixie/model`, consumed by both api and client (`UsedBy`/`Carried` excluded from the typed DTOs)
+- [x] **MODEL-02**: The `Comments` scaffold is fully removed — API routes, `Comments.tsx`, the comment model, and client api functions — with `pnpm type-check` and `pnpm build` green
 
 ### Trip Detail Load & Access Control
 
@@ -81,8 +81,8 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MODEL-01 | Phase 5 | Pending |
-| MODEL-02 | Phase 5 | Pending |
+| MODEL-01 | Phase 5 | Complete |
+| MODEL-02 | Phase 5 | Complete |
 | TRIP-01 | Phase 8 | Pending |
 | TRIP-02 | Phase 6 | Pending |
 | TRIP-03 | Phase 6 | Pending |
@@ -99,11 +99,13 @@ Which phases cover which requirements. Populated during roadmap creation.
 | E2E-02 | Phase 10 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 16 total
 - Mapped to phases: 16 ✓
 - Unmapped: 0
 
 **Phase distribution:**
+
 - Phase 5 (Shared Item Model & Comments Cleanup): MODEL-01, MODEL-02
 - Phase 6 (Trip-Detail Read API & Participation Guard): TRIP-02, TRIP-03
 - Phase 7 (Item Write API & Server-Authoritative Rules): ITEM-04, ITEM-05, ITEM-06

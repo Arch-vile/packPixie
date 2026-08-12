@@ -23,7 +23,7 @@ Full detail: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 
 **Milestone Goal:** A participant can open a trip and manage its shared packing table — the first genuinely usable slice of the actual PackPixie product. Built security-first: shared model → read API + participation guard → item write API + server-authoritative rules → inline-edit table UI → packing-view filters → E2E coverage.
 
-- [ ] **Phase 5: Shared Item Model & Comments Cleanup** - Land the `Item`/trip-detail DTO contract and remove the dead Comments scaffold
+- [x] **Phase 5: Shared Item Model & Comments Cleanup** - Land the `Item`/trip-detail DTO contract and remove the dead Comments scaffold (completed 2026-08-12)
 - [ ] **Phase 6: Trip-Detail Read API & Participation Guard** - Single-query snapshot endpoint gated by an email-keyed 404 guard
 - [ ] **Phase 7: Item Write API & Server-Authoritative Rules** - Create/edit/delete endpoints with server-enforced invariants and typed numbers
 - [ ] **Phase 8: Trip-Detail Inline-Edit Table (UI)** - Open a trip page and add, edit, and delete item rows in an inline table
@@ -125,7 +125,7 @@ Phases execute in numeric order: 5 → 6 → 7 → 8 → 9 → 10
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 5. Shared Item Model & Comments Cleanup | v2.0 | 0/1 | Planned    |  |
+| 5. Shared Item Model & Comments Cleanup | v2.0 | 1/1 | Complete    | 2026-08-12 |
 | 6. Trip-Detail Read API & Participation Guard | v2.0 | 0/TBD | Not started | - |
 | 7. Item Write API & Server-Authoritative Rules | v2.0 | 0/TBD | Not started | - |
 | 8. Trip-Detail Inline-Edit Table (UI) | v2.0 | 0/TBD | Not started | - |
