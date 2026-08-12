@@ -48,6 +48,8 @@ Any developer can run `pnpm test:e2e` and get a reliable green/red signal agains
 - ✓ Cognito test-user credentials sourced securely in CI — v1.0 (Secrets Manager via setup-env.sh; only AWS creds are GitHub secrets)
 - ✓ Smoke test covers the core happy path (create trip → verify in list) — v1.0 ("add item" dropped — no item API in v1)
 - ✓ Tests pass both locally and in CI without code changes — v1.0
+- ✓ Shared `Item`/`ItemStatus`/`TripDetailResponse` read contract lives in `@packpixie/model` — v2.0 Phase 5
+- ✓ Remove the `Comments` scaffold (endpoint + client component) — v2.0 Phase 5
 
 ### Active
 
@@ -58,7 +60,6 @@ Any developer can run `pnpm test:e2e` and get a reliable green/red signal agains
 - [ ] New rows default PackedBy to the current user
 - [ ] Packing view defaults to `PackedBy = me` with a status filter and a show-all toggle
 - [ ] Any participant can edit any row; `packed` requires PackedBy; clearing PackedBy resets Status
-- [ ] Remove the `Comments` scaffold (endpoint + client component)
 - [ ] E2E suite covers the item table happy path
 
 ### Out of Scope
@@ -99,4 +100,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-08-11 after starting milestone v2.0 Packing Table MVP_
+_Last updated: 2026-08-12 after completing Phase 5 (Shared Item Model & Comments Cleanup)_
