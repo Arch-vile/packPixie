@@ -342,17 +342,19 @@ protected_.get<{ Params: { tripId: string } }>(
 
 **This table is empty:** All claims in this research were verified or cited — no user confirmation needed. The only genuinely forward-looking item (`CreatedAt` populated by Phase 7's writer) is already a locked D-04 decision, not an assumption.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should `mapItemRecord` / `shapeTripDetail` live in `apps/api/src/lib/tripDetail.ts` or inline in `api.ts`?**
    - What we know: Phase 7 (writer) and Phase 8 (client rendering, though client-side) will touch the same item shape; the storage-attribute contract is shared.
    - What's unclear: nothing blocking — this is explicit Claude's Discretion.
    - Recommendation: Extract to `apps/api/src/lib/tripDetail.ts` — Phase 7's write path can reuse the field map as a single source of truth, reducing drift risk on the cross-phase D-04 contract.
+   - RESOLVED: Decided as Claude's Discretion and implemented in 06-01 — the mapper was extracted to `apps/api/src/lib/tripDetail.ts` per the recommendation.
 
 2. **`tripName` fallback when `META#` is somehow absent but the caller is a member.**
    - What we know: In practice `META#` is always written atomically with the creator `USER#` in the same `TransactWriteCommand` [VERIFIED: apps/api/src/routes/api.ts:118-148], so a member without META is not reachable.
    - What's unclear: whether to defensively coalesce.
    - Recommendation: `?? ''` coalesce (shown in skeleton) keeps the type honest without adding a branch; acceptable and cheap.
+   - RESOLVED: Decided as Claude's Discretion and implemented in 06-01 — `tripName` uses the `?? ''` coalesce per the recommendation.
 
 ## Environment Availability
 
