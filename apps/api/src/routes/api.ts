@@ -9,6 +9,9 @@ import {
   CreateTripRequest,
   CreateTripResponse,
   GetTripsResponse,
+  TripDetailResponse,
+  Item,
+  ItemStatus,
 } from '@packpixie/model';
 import { FastifyInstance } from 'fastify';
 import { dirname, join } from 'path';
@@ -30,6 +33,25 @@ try {
 } catch (_error) {
   appVersion = 'error';
 }
+
+// Map a stored DynamoDB item record to the public Item DTO. Optional attributes
+// are assigned only when present, so an absent stored attribute yields an absent
+// DTO key (never null/empty/zero); internal keys (PK/SK/GSI*) are never copied.
+function mapItemRecord(r: Record<string, unknown>): Item {
+  const item: Item = {
+    itemId: (r.SK as string).replace('ITEM#', ''),
+    createdAt: r.CreatedAt as string,
+    name: r.Name as string,
+    quantity: r.Qty as number,
+    consumable: r.Consumable as boolean,
+  };
+  if (r.Weight !== undefined) item.weight = r.Weight as number;
+  if (r.PackedBy !== undefined) item.packedBy = r.PackedBy as string;
+  if (r.Status !== undefined) item.status = r.Status as ItemStatus;
+  if (r.Category !== undefined) item.category = r.Category as string;
+  return item;
+}
+
 
 export function apiRoutes(
   conf: Config,
@@ -199,6 +221,59 @@ export function apiRoutes(
               );
 
               return { trips };
+            },
+          );
+
+          protected_.get<{ Params: { tripId: string } }>(
+            '/trips/:tripId',
+            async (request, reply): Promise<TripDetailResponse> => {
+              const { tripId } = request.params;
+              // Identity comes only from the verified JWT, never the path param
+              // or body. Lowercase to match the write-path USER# key normalization.
+              const callerEmail = request.user.email.trim().toLowerCase();
+
+              const result = await dynamoDBClient.send(
+                new QueryCommand({
+                  TableName: conf.dynamoDBTable,
+                  KeyConditionExpression: 'PK = :pk',
+                  ExpressionAttributeValues: {
+                    ':pk': `TRIP#${tripId}`,
+                  },
+                }),
+              );
+
+              const records = result.Items ?? [];
+
+              // Participation guard (enumeration-resistant): a single branch
+              // serves both failure modes — non-existent trip (zero records) and
+              // foreign trip (records but no matching USER#). Both yield an
+              // identical 404; never a 403, never a distinguishable response.
+              const isMember = records.some(
+                (r) => (r.SK as string) === `USER#${callerEmail}`,
+              );
+              if (!isMember) {
+                return reply
+                  .status(404)
+                  .send({ error: 'Trip not found' }) as never;
+              }
+
+              const meta = records.find((r) =>
+                (r.SK as string).startsWith('META#'),
+              );
+              const participants = records
+                .filter((r) => (r.SK as string).startsWith('USER#'))
+                .map((r) => r.Email as string)
+                .filter(Boolean);
+              const items = records
+                .filter((r) => (r.SK as string).startsWith('ITEM#'))
+                .map(mapItemRecord);
+
+              return {
+                tripId,
+                tripName: (meta?.TripName as string) ?? '',
+                participants,
+                items,
+              };
             },
           );
         });
