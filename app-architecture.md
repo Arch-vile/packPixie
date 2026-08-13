@@ -102,6 +102,8 @@ Local dev can run the same router as an HTTP server.
 
 ## 5. Data model in DynamoDB (fixed schema)
 
+> **⚠️ Superseded.** This section describes a stale multi-table schema (`Trips` / `TripMembers` / `TripRows` / `TripDistributionAssignments`, `version` optimistic locking, `ownerUserId` / `role` / soft-delete) that does **not** match the implemented design. The authoritative data-model reference is [`dynamoDB-architecture.md`](./dynamoDB-architecture.md), which documents the actual single-table layout. Participant identity everywhere is the **verified lowercased JWT email**, never a `UserId`. Read the single-table doc for the real schema; the tables below are retained only for historical context.
+
 All data is scoped by `tripId` as partition key.
 
 ### 5.1 `Trips` table
@@ -117,7 +119,7 @@ All data is scoped by `tripId` as partition key.
 ### 5.2 `TripMembers` table
 
 - **PK:** `tripId`
-- **SK:** `userId`
+- **SK:** `email`
 - Attributes:
 
   - `role` (OWNER, MEMBER)
@@ -126,7 +128,7 @@ All data is scoped by `tripId` as partition key.
 
 For listing trips by user, add **GSI**:
 
-- **GSI1PK:** `userId`
+- **GSI1PK:** `email`
 - **GSI1SK:** `joinedAt` (or `tripId`)
 
 ### 5.3 `TripRows` table (row-level optimistic locking)
