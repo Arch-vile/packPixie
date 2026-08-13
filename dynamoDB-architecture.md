@@ -17,7 +17,7 @@ The table will hold three types of entities, all grouped together under a single
 | Entity Type     | PK              | SK              | GSI1PK          | GSI1SK          | App Attributes                                                                               |
 | --------------- | --------------- | --------------- | --------------- | --------------- | -------------------------------------------------------------------------------------------- |
 | **Trip (Meta)** | `TRIP#<TripId>` | `META#<TripId>` |                 |                 | `TripName`, `CreatedAt`                                                                      |
-| **Participant** | `TRIP#<TripId>` | `USER#<UserId>` | `USER#<UserId>` | `TRIP#<TripId>` | `TripName` (denormalized), `AddedAt`                                                         |
+| **Participant** | `TRIP#<TripId>` | `USER#<email>`  | `USER#<email>`  | `TRIP#<TripId>` | `TripName` (denormalized), `Email`, `AddedAt`                                                |
 | **Item**        | `TRIP#<TripId>` | `ITEM#<ItemId>` |                 |                 | `Name`, `Qty`, `Weight`, `PackedBy`, `UsedBy`, `Carried`, `Status`, `Consumable`, `Category` |
 
 ---
@@ -26,7 +26,9 @@ The table will hold three types of entities, all grouped together under a single
 
 Mapping your specific product rules to DynamoDB data types is where the magic happens:
 
-- **`PackedBy` (String or Null):** Stores the `<UserId>`. If unassigned, omit the attribute or store as `null`.
+> **Participant identity:** everywhere in the current implementation, participant identity is the lowercased verified JWT email (not a `UserId`). This matches the live write path (`apps/api/src/routes/api.ts`), which stores the participant `SK`, `GSI1PK`, and `Email` all as the lowercased email.
+
+- **`PackedBy` (String or Null):** Stores the participant email (the lowercased verified JWT email). If unassigned, omit the attribute or store as `null`.
 - **`UsedBy` (String Set - `SS`):** DynamoDB natively supports String Sets, which guarantee uniqueness (no duplicate users). This perfectly maps to your rule: _"UsedBy is a set of trip participants, with no duplicates."_
 - **`Carried` (Map - `M`):** Store this as a Map of `<UserId>` to `Number` (quantity).
 - _Example:_ `{"user_123": 2, "user_456": 1}`
@@ -52,7 +54,7 @@ Because the client is doing the heavy lifting, your backend only needs to execut
 ### B. Get All Trips for a User (The Dashboard)
 
 - **Operation:** `Query` on `GSI1`
-- **Key Condition:** `GSI1PK = USER#<UserId>`
+- **Key Condition:** `GSI1PK = USER#<email>`
 - **Why it's perfect:** This queries the inverted index on the Participant entity. It instantly returns a list of all trips the user is a part of. Because we denormalized `TripName` onto the Participant record, you don't even need to do a secondary lookup to render the dashboard list.
 
 ### C. The "Copy Trip" Flow
