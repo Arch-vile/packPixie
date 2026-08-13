@@ -10,8 +10,6 @@ import {
   CreateTripResponse,
   GetTripsResponse,
   TripDetailResponse,
-  Item,
-  ItemStatus,
 } from '@packpixie/model';
 import { FastifyInstance } from 'fastify';
 import { dirname, join } from 'path';
@@ -19,6 +17,7 @@ import { fileURLToPath } from 'url';
 import { Config } from '../config.js';
 import { authPlugin } from '../plugins/auth.js';
 import { checkDynamoDBConnection } from '../lib/dynamodb.js';
+import { mapItemRecord } from '../lib/tripDetail.js';
 import { readFileSync } from 'fs';
 import { randomUUID } from 'crypto';
 
@@ -33,25 +32,6 @@ try {
 } catch (_error) {
   appVersion = 'error';
 }
-
-// Map a stored DynamoDB item record to the public Item DTO. Optional attributes
-// are assigned only when present, so an absent stored attribute yields an absent
-// DTO key (never null/empty/zero); internal keys (PK/SK/GSI*) are never copied.
-function mapItemRecord(r: Record<string, unknown>): Item {
-  const item: Item = {
-    itemId: (r.SK as string).replace('ITEM#', ''),
-    createdAt: r.CreatedAt as string,
-    name: r.Name as string,
-    quantity: r.Qty as number,
-    consumable: r.Consumable as boolean,
-  };
-  if (r.Weight !== undefined) item.weight = r.Weight as number;
-  if (r.PackedBy !== undefined) item.packedBy = r.PackedBy as string;
-  if (r.Status !== undefined) item.status = r.Status as ItemStatus;
-  if (r.Category !== undefined) item.category = r.Category as string;
-  return item;
-}
-
 
 export function apiRoutes(
   conf: Config,
