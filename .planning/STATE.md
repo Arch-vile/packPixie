@@ -71,7 +71,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Locked decisions affecti
 
 ### Pending Todos
 
-None yet.
+- **[blocker] Paginate GET /trips/:tripId query** (Phase 6 CR-01, deferred MVP-scoped) — single unpaginated Query can truncate the `USER#` guard records for trips >1MB partition, spuriously 404-ing a legitimate member. Also carries WR-01/WR-02/IN-01/IN-02 from the same review. See `.planning/todos/pending/2026-08-13-paginate-trip-detail-query-for-participation-guard.md`.
 
 ### Blockers/Concerns
 
