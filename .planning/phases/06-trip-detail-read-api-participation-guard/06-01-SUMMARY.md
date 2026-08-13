@@ -138,6 +138,14 @@ None - no external service configuration required.
 - Read path + authorization slice complete; `mapItemRecord`'s attribute names (`Name`/`Qty`/`Weight`/`PackedBy`/`Status`/`Consumable`/`Category`/`CreatedAt`, SK `ITEM#<id>`) are the contract Phase 7's write path MUST match verbatim.
 - Behavioral guard matrix M1-M4 must be recorded at end-of-phase human-verify before `/gsd-verify-work` (no automated behavioral test this phase; E2E deferred to Phase 10).
 
+## Self-Check: PASSED
+
+- FOUND: apps/api/src/lib/tripDetail.ts
+- FOUND: apps/api/src/routes/api.ts
+- FOUND: .planning/phases/06-trip-detail-read-api-participation-guard/06-01-SUMMARY.md
+- FOUND commit: 63eeb97 (Task 1)
+- FOUND commit: 67060e8 (Task 2)
+
 ---
 *Phase: 06-trip-detail-read-api-participation-guard*
 *Completed: 2026-08-13*
