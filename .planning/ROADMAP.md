@@ -59,10 +59,10 @@ Full detail: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
   2. A user who is not a participant receives 404 (never 403) — reads on foreign and non-existent trips are indistinguishable, so trip existence can't be enumerated.
   3. Membership, `PackedBy`, and the default-view identity all key off the verified JWT email (`request.user.email`); the stale `<UserId>` architecture docs are corrected to email.
 
-**Plans**: 2 plans
+**Plans**: 2/2 plans executed
 
-- [ ] 06-01-PLAN.md — GET /trips/:tripId read endpoint: single query, email-keyed 404 participation guard, explicit-field TripDetailResponse + reusable item mapper (TRIP-02, TRIP-03)
-- [ ] 06-02-PLAN.md — Correct dynamoDB-architecture.md + app-architecture.md §5 identity docs from UserId to email (TRIP-03, SC #3)
+- [x] 06-01-PLAN.md — GET /trips/:tripId read endpoint: single query, email-keyed 404 participation guard, explicit-field TripDetailResponse + reusable item mapper (TRIP-02, TRIP-03)
+- [x] 06-02-PLAN.md — Correct dynamoDB-architecture.md + app-architecture.md §5 identity docs from UserId to email (TRIP-03, SC #3)
 
 ### Phase 7: Item Write API & Server-Authoritative Rules
 
@@ -129,7 +129,7 @@ Phases execute in numeric order: 5 → 6 → 7 → 8 → 9 → 10
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 5. Shared Item Model & Comments Cleanup | v2.0 | 1/1 | Complete    | 2026-08-12 |
-| 6. Trip-Detail Read API & Participation Guard | v2.0 | 0/2 | Not started | - |
+| 6. Trip-Detail Read API & Participation Guard | v2.0 | 2/2 | In Progress|  |
 | 7. Item Write API & Server-Authoritative Rules | v2.0 | 0/TBD | Not started | - |
 | 8. Trip-Detail Inline-Edit Table (UI) | v2.0 | 0/TBD | Not started | - |
 | 9. Packing View Filters | v2.0 | 0/TBD | Not started | - |
