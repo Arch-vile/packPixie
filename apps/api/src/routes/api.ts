@@ -131,10 +131,18 @@ export function apiRoutes(
                 }),
               );
 
-              // Write invited participants in chunks of 25 (BatchWrite limit)
-              const validEmails = (participantEmails ?? [])
-                .map((e) => e.trim().toLowerCase())
-                .filter((e) => e.length > 0 && e !== creatorEmail);
+              // Write invited participants in chunks of 25 (BatchWrite limit).
+              // De-duplicate after normalization — BatchWriteItem rejects a
+              // batch containing duplicate keys with a ValidationException,
+              // which two emails that normalize to the same address would
+              // trigger otherwise (CR-05).
+              const validEmails = [
+                ...new Set(
+                  (participantEmails ?? [])
+                    .map((e) => e.trim().toLowerCase())
+                    .filter((e) => e.length > 0 && e !== creatorEmail),
+                ),
+              ];
 
               for (let i = 0; i < validEmails.length; i += 25) {
                 const chunk = validEmails.slice(i, i + 25);
