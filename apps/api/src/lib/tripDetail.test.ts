@@ -12,6 +12,7 @@ import {
   buildCreateItemAttributes,
   computeItemPatch,
   buildUpdateExpression,
+  assertItemDeletable,
 } from './tripDetail.js';
 
 describe('findUnknownFields', () => {
@@ -322,5 +323,23 @@ describe('buildUpdateExpression', () => {
     // Literal reserved words must never appear unaliased in the expression.
     assert.equal(/(?<![A-Za-z#:])Name\s*=/.test(result.UpdateExpression), false);
     assert.equal(/(?<![A-Za-z#:])Status\s*=/.test(result.UpdateExpression), false);
+  });
+});
+
+describe('assertItemDeletable', () => {
+  test('rejects a packed item', () => {
+    assert.notEqual(assertItemDeletable({ Status: 'packed' }), null);
+  });
+
+  test('allows a to-buy item', () => {
+    assert.equal(assertItemDeletable({ Status: 'to-buy' }), null);
+  });
+
+  test('allows a found item', () => {
+    assert.equal(assertItemDeletable({ Status: 'found' }), null);
+  });
+
+  test('allows an item with no Status', () => {
+    assert.equal(assertItemDeletable({}), null);
   });
 });
