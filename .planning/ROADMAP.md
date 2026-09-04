@@ -76,9 +76,9 @@ Full detail: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
   3. `Quantity` and `Weight` persist as DynamoDB numbers; an unset `Weight` is stored absent (shown blank), distinct from `0`.
   4. Every item mutation requires trip participation and rejects unknown `itemId`s with 404 (no phantom-row upserts).
 
-**Plans**: 0/1 plans executed
+**Plans**: 1/1 plans executed
 
-- [ ] 07-01-PLAN.md — POST/PATCH/DELETE /trips/:tripId/items with a shared, unit-tested invariant core enforcing ITEM-04/05/06 server-side (ITEM-04, ITEM-05, ITEM-06)
+- [x] 07-01-PLAN.md — POST/PATCH/DELETE /trips/:tripId/items with a shared, unit-tested invariant core enforcing ITEM-04/05/06 server-side (ITEM-04, ITEM-05, ITEM-06)
 
 ### Phase 8: Trip-Detail Inline-Edit Table (UI)
 
@@ -132,7 +132,7 @@ Phases execute in numeric order: 5 → 6 → 7 → 8 → 9 → 10
 |-------|-----------|----------------|--------|-----------|
 | 5. Shared Item Model & Comments Cleanup | v2.0 | 1/1 | Complete    | 2026-08-12 |
 | 6. Trip-Detail Read API & Participation Guard | v2.0 | 2/2 | In Progress|  |
-| 7. Item Write API & Server-Authoritative Rules | v2.0 | 0/1 | Not started | - |
+| 7. Item Write API & Server-Authoritative Rules | v2.0 | 1/1 | In Progress|  |
 | 8. Trip-Detail Inline-Edit Table (UI) | v2.0 | 0/TBD | Not started | - |
 | 9. Packing View Filters | v2.0 | 0/TBD | Not started | - |
 | 10. E2E Item-Table Coverage | v2.0 | 0/TBD | Not started | - |
