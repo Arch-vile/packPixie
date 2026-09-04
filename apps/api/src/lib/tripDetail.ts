@@ -202,6 +202,10 @@ export function buildCreateItemAttributes(
     return { ok: false, error: statusError };
   }
 
+  if (body.category !== undefined && typeof body.category !== 'string') {
+    return { ok: false, error: 'category must be a string' };
+  }
+
   return {
     ok: true,
     value: {
