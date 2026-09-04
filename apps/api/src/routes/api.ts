@@ -3,6 +3,7 @@ import {
   QueryCommand,
   TransactWriteCommand,
   BatchWriteCommand,
+  PutCommand,
 } from '@aws-sdk/lib-dynamodb';
 import {
   StatusResponse,
@@ -10,6 +11,8 @@ import {
   CreateTripResponse,
   GetTripsResponse,
   TripDetailResponse,
+  Item,
+  CreateItemRequest,
 } from '@packpixie/model';
 import { FastifyInstance } from 'fastify';
 import { dirname, join } from 'path';
@@ -17,7 +20,12 @@ import { fileURLToPath } from 'url';
 import { Config } from '../config.js';
 import { authPlugin } from '../plugins/auth.js';
 import { checkDynamoDBConnection } from '../lib/dynamodb.js';
-import { mapItemRecord } from '../lib/tripDetail.js';
+import {
+  mapItemRecord,
+  buildCreateItemAttributes,
+  isTripMember,
+  extractParticipantEmails,
+} from '../lib/tripDetail.js';
 import { readFileSync } from 'fs';
 import { randomUUID } from 'crypto';
 
@@ -254,6 +262,62 @@ export function apiRoutes(
                 participants,
                 items,
               };
+            },
+          );
+
+          protected_.post<{
+            Params: { tripId: string };
+            Body: CreateItemRequest;
+          }>(
+            '/trips/:tripId/items',
+            async (request, reply): Promise<Item> => {
+              const { tripId } = request.params;
+              const callerEmail = request.user.email.trim().toLowerCase();
+
+              const result = await dynamoDBClient.send(
+                new QueryCommand({
+                  TableName: conf.dynamoDBTable,
+                  KeyConditionExpression: 'PK = :pk',
+                  ExpressionAttributeValues: {
+                    ':pk': `TRIP#${tripId}`,
+                  },
+                }),
+              );
+
+              const records = result.Items ?? [];
+
+              if (!isTripMember(records, callerEmail)) {
+                return reply
+                  .status(404)
+                  .send({ error: 'Trip not found' }) as never;
+              }
+
+              const participantEmails = extractParticipantEmails(records);
+              const itemId = randomUUID();
+              const now = new Date().toISOString();
+
+              const attrsResult = buildCreateItemAttributes({
+                tripId,
+                itemId,
+                now,
+                body: request.body,
+                participantEmails,
+              });
+
+              if (!attrsResult.ok) {
+                return reply
+                  .status(400)
+                  .send({ error: attrsResult.error }) as never;
+              }
+
+              await dynamoDBClient.send(
+                new PutCommand({
+                  TableName: conf.dynamoDBTable,
+                  Item: attrsResult.value,
+                }),
+              );
+
+              return reply.status(201).send(mapItemRecord(attrsResult.value));
             },
           );
         });

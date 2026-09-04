@@ -12,6 +12,16 @@ export interface Item {
   category?: string;
 }
 
+export interface CreateItemRequest {
+  name: string;
+  quantity?: number;
+  weight?: number;
+  packedBy?: string;
+  status?: ItemStatus;
+  category?: string;
+  consumable?: boolean;
+}
+
 export interface TripDetailResponse {
   tripId: string;
   tripName: string;
