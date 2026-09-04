@@ -214,3 +214,177 @@ export function buildCreateItemAttributes(
     },
   };
 }
+
+export interface ItemPatchResult {
+  setAttrs: Record<string, unknown>;
+  removeAttrs: string[];
+}
+
+export function computeItemPatch(
+  current: Record<string, unknown>,
+  body: Record<string, unknown>,
+  participantEmails: string[],
+): ItemWriteResult<ItemPatchResult> {
+  const unknownFields = findUnknownFields(body);
+  if (unknownFields.length > 0) {
+    return { ok: false, error: `Unknown field: ${unknownFields[0]}` };
+  }
+
+  if (Object.keys(body).length === 0) {
+    return { ok: false, error: 'No fields to update' };
+  }
+
+  const packedByCleared = 'packedBy' in body && body.packedBy === null;
+
+  let resultingPackedBy: string | undefined;
+  if ('packedBy' in body) {
+    if (body.packedBy === null) {
+      resultingPackedBy = undefined;
+    } else {
+      const trimmed = (body.packedBy as string)?.trim();
+      if (!trimmed) {
+        return { ok: false, error: 'packedBy must be a non-empty string' };
+      }
+      const participantError = validatePackedByParticipant(
+        trimmed,
+        participantEmails,
+      );
+      if (participantError) {
+        return { ok: false, error: participantError };
+      }
+      resultingPackedBy = trimmed;
+    }
+  } else {
+    resultingPackedBy = current.PackedBy as string | undefined;
+  }
+
+  let resultingStatus: ItemStatus | undefined;
+  if ('status' in body) {
+    if (body.status === null) {
+      resultingStatus = undefined;
+    } else {
+      if (!isValidItemStatus(body.status)) {
+        return {
+          ok: false,
+          error: 'status must be one of to-buy, found, packed',
+        };
+      }
+      resultingStatus = body.status;
+    }
+  } else {
+    resultingStatus = packedByCleared
+      ? undefined
+      : (current.Status as ItemStatus | undefined);
+  }
+
+  const statusError = validateStatusRequiresPackedBy(
+    resultingStatus,
+    resultingPackedBy,
+  );
+  if (statusError) {
+    return { ok: false, error: statusError };
+  }
+
+  const setAttrs: Record<string, unknown> = {};
+  const removeAttrs: string[] = [];
+
+  if ('name' in body) {
+    const trimmed = (body.name as string)?.trim();
+    if (!trimmed) {
+      return { ok: false, error: 'name is required' };
+    }
+    setAttrs.Name = trimmed;
+  }
+
+  if ('quantity' in body) {
+    const result = validateNumericField(body.quantity, 'quantity');
+    if (!result.ok) return result;
+    setAttrs.Qty = result.value;
+  }
+
+  if ('consumable' in body) {
+    if (typeof body.consumable !== 'boolean') {
+      return { ok: false, error: 'consumable must be a boolean' };
+    }
+    setAttrs.Consumable = body.consumable;
+  }
+
+  if ('weight' in body) {
+    if (body.weight === null) {
+      removeAttrs.push('Weight');
+    } else {
+      const result = validateNumericField(body.weight, 'weight');
+      if (!result.ok) return result;
+      setAttrs.Weight = result.value;
+    }
+  }
+
+  if ('packedBy' in body) {
+    if (body.packedBy === null) {
+      removeAttrs.push('PackedBy');
+    } else {
+      setAttrs.PackedBy = (resultingPackedBy as string).toLowerCase();
+    }
+  }
+
+  if ('status' in body || packedByCleared) {
+    if (resultingStatus === undefined) {
+      removeAttrs.push('Status');
+    } else {
+      setAttrs.Status = resultingStatus;
+    }
+  }
+
+  if ('category' in body) {
+    if (body.category === null) {
+      removeAttrs.push('Category');
+    } else {
+      if (typeof body.category !== 'string') {
+        return { ok: false, error: 'category must be a string' };
+      }
+      setAttrs.Category = body.category;
+    }
+  }
+
+  return { ok: true, value: { setAttrs, removeAttrs } };
+}
+
+export function buildUpdateExpression(
+  setAttrs: Record<string, unknown>,
+  removeAttrs: string[],
+): {
+  UpdateExpression: string;
+  ExpressionAttributeNames: Record<string, string>;
+  ExpressionAttributeValues: Record<string, unknown>;
+} {
+  const ExpressionAttributeNames: Record<string, string> = {};
+  const ExpressionAttributeValues: Record<string, unknown> = {};
+  const setClauses: string[] = [];
+  const removeClauses: string[] = [];
+
+  Object.keys(setAttrs).forEach((key, i) => {
+    const nameAlias = `#s${i}`;
+    const valueAlias = `:v${i}`;
+    ExpressionAttributeNames[nameAlias] = key;
+    ExpressionAttributeValues[valueAlias] = setAttrs[key];
+    setClauses.push(`${nameAlias} = ${valueAlias}`);
+  });
+
+  removeAttrs.forEach((key, i) => {
+    const nameAlias = `#r${i}`;
+    ExpressionAttributeNames[nameAlias] = key;
+    removeClauses.push(nameAlias);
+  });
+
+  const parts: string[] = [];
+  if (setClauses.length > 0) parts.push(`SET ${setClauses.join(', ')}`);
+  if (removeClauses.length > 0) {
+    parts.push(`REMOVE ${removeClauses.join(', ')}`);
+  }
+
+  return {
+    UpdateExpression: parts.join(' '),
+    ExpressionAttributeNames,
+    ExpressionAttributeValues,
+  };
+}

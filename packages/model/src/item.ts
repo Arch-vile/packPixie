@@ -22,6 +22,16 @@ export interface CreateItemRequest {
   consumable?: boolean;
 }
 
+export interface PatchItemRequest {
+  name?: string;
+  quantity?: number;
+  weight?: number | null;
+  packedBy?: string | null;
+  status?: ItemStatus | null;
+  category?: string | null;
+  consumable?: boolean;
+}
+
 export interface TripDetailResponse {
   tripId: string;
   tripName: string;

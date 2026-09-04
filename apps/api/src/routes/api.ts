@@ -4,6 +4,7 @@ import {
   TransactWriteCommand,
   BatchWriteCommand,
   PutCommand,
+  UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 import {
   StatusResponse,
@@ -13,6 +14,7 @@ import {
   TripDetailResponse,
   Item,
   CreateItemRequest,
+  PatchItemRequest,
 } from '@packpixie/model';
 import { FastifyInstance } from 'fastify';
 import { dirname, join } from 'path';
@@ -25,6 +27,9 @@ import {
   buildCreateItemAttributes,
   isTripMember,
   extractParticipantEmails,
+  findItemRecord,
+  computeItemPatch,
+  buildUpdateExpression,
 } from '../lib/tripDetail.js';
 import { readFileSync } from 'fs';
 import { randomUUID } from 'crypto';
@@ -318,6 +323,101 @@ export function apiRoutes(
               );
 
               return reply.status(201).send(mapItemRecord(attrsResult.value));
+            },
+          );
+
+          protected_.patch<{
+            Params: { tripId: string; itemId: string };
+            Body: PatchItemRequest;
+          }>(
+            '/trips/:tripId/items/:itemId',
+            async (request, reply): Promise<Item> => {
+              const { tripId, itemId } = request.params;
+              const callerEmail = request.user.email.trim().toLowerCase();
+
+              const result = await dynamoDBClient.send(
+                new QueryCommand({
+                  TableName: conf.dynamoDBTable,
+                  KeyConditionExpression: 'PK = :pk',
+                  ExpressionAttributeValues: {
+                    ':pk': `TRIP#${tripId}`,
+                  },
+                }),
+              );
+
+              const records = result.Items ?? [];
+
+              if (!isTripMember(records, callerEmail)) {
+                return reply
+                  .status(404)
+                  .send({ error: 'Trip not found' }) as never;
+              }
+
+              const itemRecord = findItemRecord(records, itemId);
+              if (!itemRecord) {
+                return reply
+                  .status(404)
+                  .send({ error: 'Item not found' }) as never;
+              }
+
+              const participantEmails = extractParticipantEmails(records);
+              const patchResult = computeItemPatch(
+                itemRecord,
+                request.body as unknown as Record<string, unknown>,
+                participantEmails,
+              );
+
+              if (!patchResult.ok) {
+                return reply
+                  .status(400)
+                  .send({ error: patchResult.error }) as never;
+              }
+
+              const { setAttrs, removeAttrs } = patchResult.value;
+              const {
+                UpdateExpression,
+                ExpressionAttributeNames,
+                ExpressionAttributeValues,
+              } = buildUpdateExpression(setAttrs, removeAttrs);
+
+              try {
+                const updateResult = await dynamoDBClient.send(
+                  new UpdateCommand({
+                    TableName: conf.dynamoDBTable,
+                    Key: {
+                      PK: `TRIP#${tripId}`,
+                      SK: `ITEM#${itemId}`,
+                    },
+                    UpdateExpression,
+                    ExpressionAttributeNames,
+                    ExpressionAttributeValues: Object.keys(
+                      ExpressionAttributeValues,
+                    ).length
+                      ? ExpressionAttributeValues
+                      : undefined,
+                    ConditionExpression: 'attribute_exists(PK)',
+                    ReturnValues: 'ALL_NEW',
+                  }),
+                );
+
+                return reply
+                  .status(200)
+                  .send(
+                    mapItemRecord(
+                      updateResult.Attributes as Record<string, unknown>,
+                    ),
+                  );
+              } catch (error) {
+                if (
+                  (error as { name?: string }).name ===
+                  'ConditionalCheckFailedException'
+                ) {
+                  return reply
+                    .status(404)
+                    .send({ error: 'Item not found' }) as never;
+                }
+                throw error;
+              }
             },
           );
         });
