@@ -10,6 +10,8 @@ import {
   extractParticipantEmails,
   findItemRecord,
   buildCreateItemAttributes,
+  computeItemPatch,
+  buildUpdateExpression,
 } from './tripDetail.js';
 
 describe('findUnknownFields', () => {
@@ -198,5 +200,127 @@ describe('buildCreateItemAttributes', () => {
       body: { name: 'Rope', packedBy: 'nobody@example.com' },
     });
     assert.equal(result.ok, false);
+  });
+});
+
+describe('computeItemPatch', () => {
+  const participantEmails = ['a@b.com', 'x@y.com'];
+
+  test('clearing packedBy only atomically removes PackedBy and Status', () => {
+    const current = { PackedBy: 'a@b.com', Status: 'packed' };
+    const result = computeItemPatch(
+      current,
+      { packedBy: null },
+      participantEmails,
+    );
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.ok(result.value.removeAttrs.includes('PackedBy'));
+      assert.ok(result.value.removeAttrs.includes('Status'));
+    }
+  });
+
+  test('setting status packed with no current PackedBy is rejected', () => {
+    const current = {};
+    const result = computeItemPatch(
+      current,
+      { status: 'packed' },
+      participantEmails,
+    );
+    assert.equal(result.ok, false);
+  });
+
+  test('setting status packed when current PackedBy already set succeeds', () => {
+    const current = { PackedBy: 'a@b.com' };
+    const result = computeItemPatch(
+      current,
+      { status: 'packed' },
+      participantEmails,
+    );
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.value.setAttrs.Status, 'packed');
+    }
+  });
+
+  test('clearing packedBy and setting status packed in same request is rejected', () => {
+    const current = { PackedBy: 'a@b.com', Status: 'packed' };
+    const result = computeItemPatch(
+      current,
+      { packedBy: null, status: 'packed' },
+      participantEmails,
+    );
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.equal(result.error, 'packed requires PackedBy to be set');
+    }
+  });
+
+  test('unknown field is rejected', () => {
+    const current = {};
+    const result = computeItemPatch(
+      current,
+      { foo: 1 } as never,
+      participantEmails,
+    );
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.equal(result.error, 'Unknown field: foo');
+    }
+  });
+
+  test('packedBy not in participant list is rejected', () => {
+    const current = {};
+    const result = computeItemPatch(
+      current,
+      { packedBy: 'nobody@example.com' },
+      participantEmails,
+    );
+    assert.equal(result.ok, false);
+  });
+
+  test('weight: null removes Weight', () => {
+    const current = { Weight: 5 };
+    const result = computeItemPatch(current, { weight: null }, participantEmails);
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.ok(result.value.removeAttrs.includes('Weight'));
+    }
+  });
+
+  test('weight: 0 sets Weight to 0', () => {
+    const current = {};
+    const result = computeItemPatch(current, { weight: 0 }, participantEmails);
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.value.setAttrs.Weight, 0);
+    }
+  });
+
+  test('empty body is rejected', () => {
+    const current = {};
+    const result = computeItemPatch(current, {}, participantEmails);
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.equal(result.error, 'No fields to update');
+    }
+  });
+});
+
+describe('buildUpdateExpression', () => {
+  test('produces SET and REMOVE clauses with aliased names', () => {
+    const result = buildUpdateExpression(
+      { Name: 'x', Status: 'packed' },
+      ['Weight'],
+    );
+    assert.match(result.UpdateExpression, /SET/);
+    assert.match(result.UpdateExpression, /REMOVE/);
+    const aliasedValues = Object.values(result.ExpressionAttributeNames);
+    assert.ok(aliasedValues.includes('Name'));
+    assert.ok(aliasedValues.includes('Status'));
+    assert.ok(aliasedValues.includes('Weight'));
+    // Literal reserved words must never appear unaliased in the expression.
+    assert.equal(/(?<![A-Za-z#:])Name\s*=/.test(result.UpdateExpression), false);
+    assert.equal(/(?<![A-Za-z#:])Status\s*=/.test(result.UpdateExpression), false);
   });
 });
