@@ -388,3 +388,12 @@ export function buildUpdateExpression(
     ExpressionAttributeValues,
   };
 }
+
+export function assertItemDeletable(
+  current: Record<string, unknown>,
+): string | null {
+  if (current.Status === 'packed') {
+    return 'Cannot delete a packed item — unpack it first';
+  }
+  return null;
+}

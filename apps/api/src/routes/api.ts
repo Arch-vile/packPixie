@@ -5,6 +5,7 @@ import {
   BatchWriteCommand,
   PutCommand,
   UpdateCommand,
+  DeleteCommand,
 } from '@aws-sdk/lib-dynamodb';
 import {
   StatusResponse,
@@ -30,6 +31,7 @@ import {
   findItemRecord,
   computeItemPatch,
   buildUpdateExpression,
+  assertItemDeletable,
 } from '../lib/tripDetail.js';
 import { readFileSync } from 'fs';
 import { randomUUID } from 'crypto';
@@ -418,6 +420,60 @@ export function apiRoutes(
                 }
                 throw error;
               }
+            },
+          );
+
+          protected_.delete<{
+            Params: { tripId: string; itemId: string };
+          }>(
+            '/trips/:tripId/items/:itemId',
+            async (request, reply): Promise<void> => {
+              const { tripId, itemId } = request.params;
+              const callerEmail = request.user.email.trim().toLowerCase();
+
+              const result = await dynamoDBClient.send(
+                new QueryCommand({
+                  TableName: conf.dynamoDBTable,
+                  KeyConditionExpression: 'PK = :pk',
+                  ExpressionAttributeValues: {
+                    ':pk': `TRIP#${tripId}`,
+                  },
+                }),
+              );
+
+              const records = result.Items ?? [];
+
+              if (!isTripMember(records, callerEmail)) {
+                return reply
+                  .status(404)
+                  .send({ error: 'Trip not found' }) as never;
+              }
+
+              const itemRecord = findItemRecord(records, itemId);
+              if (!itemRecord) {
+                return reply
+                  .status(404)
+                  .send({ error: 'Item not found' }) as never;
+              }
+
+              const deleteError = assertItemDeletable(itemRecord);
+              if (deleteError) {
+                return reply
+                  .status(400)
+                  .send({ error: deleteError }) as never;
+              }
+
+              await dynamoDBClient.send(
+                new DeleteCommand({
+                  TableName: conf.dynamoDBTable,
+                  Key: {
+                    PK: `TRIP#${tripId}`,
+                    SK: `ITEM#${itemId}`,
+                  },
+                }),
+              );
+
+              return reply.status(204).send();
             },
           );
         });
