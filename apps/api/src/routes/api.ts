@@ -463,15 +463,36 @@ export function apiRoutes(
                   .send({ error: deleteError }) as never;
               }
 
-              await dynamoDBClient.send(
-                new DeleteCommand({
-                  TableName: conf.dynamoDBTable,
-                  Key: {
-                    PK: `TRIP#${tripId}`,
-                    SK: `ITEM#${itemId}`,
-                  },
-                }),
-              );
+              try {
+                await dynamoDBClient.send(
+                  new DeleteCommand({
+                    TableName: conf.dynamoDBTable,
+                    Key: {
+                      PK: `TRIP#${tripId}`,
+                      SK: `ITEM#${itemId}`,
+                    },
+                    // Re-check the "not packed" invariant atomically against
+                    // the write itself, closing the TOCTOU window between the
+                    // Query above and this Delete (CR-03).
+                    ConditionExpression:
+                      'attribute_exists(PK) AND (attribute_not_exists(#status) OR #status <> :packed)',
+                    ExpressionAttributeNames: { '#status': 'Status' },
+                    ExpressionAttributeValues: { ':packed': 'packed' },
+                  }),
+                );
+              } catch (error) {
+                if (
+                  (error as { name?: string }).name ===
+                  'ConditionalCheckFailedException'
+                ) {
+                  return reply
+                    .status(409)
+                    .send({
+                      error: 'Item was modified or is packed — refresh and retry',
+                    }) as never;
+                }
+                throw error;
+              }
 
               return reply.status(204).send();
             },
