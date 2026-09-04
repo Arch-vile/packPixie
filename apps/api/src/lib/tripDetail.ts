@@ -235,6 +235,10 @@ export function computeItemPatch(
   }
 
   const packedByCleared = 'packedBy' in body && body.packedBy === null;
+  // Only force-clear Status when the current status actually required
+  // packedBy (i.e. current.Status === 'packed'). Clearing packedBy must not
+  // silently destroy an unrelated status like 'found' or 'to-buy'.
+  const statusNeedsClearing = packedByCleared && current.Status === 'packed';
 
   let resultingPackedBy: string | undefined;
   if ('packedBy' in body) {
@@ -272,7 +276,7 @@ export function computeItemPatch(
       resultingStatus = body.status;
     }
   } else {
-    resultingStatus = packedByCleared
+    resultingStatus = statusNeedsClearing
       ? undefined
       : (current.Status as ItemStatus | undefined);
   }
@@ -327,7 +331,7 @@ export function computeItemPatch(
     }
   }
 
-  if ('status' in body || packedByCleared) {
+  if ('status' in body || statusNeedsClearing) {
     if (resultingStatus === undefined) {
       removeAttrs.push('Status');
     } else {
