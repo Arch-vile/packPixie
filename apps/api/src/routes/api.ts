@@ -86,7 +86,7 @@ export function apiRoutes(
               const { tripName, participantEmails } = request.body;
               const userEmail = request.user.email;
 
-              if (!tripName?.trim()) {
+              if (typeof tripName !== 'string' || !tripName.trim()) {
                 return reply
                   .status(400)
                   .send({ error: 'tripName is required' }) as never;

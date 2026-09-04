@@ -128,6 +128,9 @@ export function buildCreateItemAttributes(
 ): ItemWriteResult<Record<string, unknown>> {
   const { tripId, itemId, now, body, participantEmails } = params;
 
+  if (body.name !== undefined && typeof body.name !== 'string') {
+    return { ok: false, error: 'name must be a string' };
+  }
   const trimmedName = body.name?.trim();
   if (!trimmedName) {
     return { ok: false, error: 'name is required' };
@@ -177,6 +180,9 @@ export function buildCreateItemAttributes(
 
   let packedBy: string | undefined;
   if (body.packedBy !== undefined) {
+    if (typeof body.packedBy !== 'string') {
+      return { ok: false, error: 'packedBy must be a string' };
+    }
     const trimmed = body.packedBy.trim();
     if (!trimmed) {
       return { ok: false, error: 'packedBy must be a non-empty string' };
@@ -245,7 +251,10 @@ export function computeItemPatch(
     if (body.packedBy === null) {
       resultingPackedBy = undefined;
     } else {
-      const trimmed = (body.packedBy as string)?.trim();
+      if (typeof body.packedBy !== 'string') {
+        return { ok: false, error: 'packedBy must be a string' };
+      }
+      const trimmed = body.packedBy.trim();
       if (!trimmed) {
         return { ok: false, error: 'packedBy must be a non-empty string' };
       }
@@ -293,7 +302,10 @@ export function computeItemPatch(
   const removeAttrs: string[] = [];
 
   if ('name' in body) {
-    const trimmed = (body.name as string)?.trim();
+    if (typeof body.name !== 'string') {
+      return { ok: false, error: 'name must be a string' };
+    }
+    const trimmed = body.name.trim();
     if (!trimmed) {
       return { ok: false, error: 'name is required' };
     }
