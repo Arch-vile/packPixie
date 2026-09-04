@@ -224,6 +224,14 @@ export function buildCreateItemAttributes(
 export interface ItemPatchResult {
   setAttrs: Record<string, unknown>;
   removeAttrs: string[];
+  // True when this update sets Status to 'packed' based on a PackedBy value
+  // that is NOT being written by this same request (i.e. read from a
+  // possibly-stale `current` snapshot). Callers must add an atomic
+  // ConditionExpression (attribute_exists(PackedBy)) to the write so a
+  // concurrent request that cleared PackedBy between the read and this
+  // write cannot leave the item persisted as packed with no PackedBy
+  // (CR-04).
+  requiresPackedByExists: boolean;
 }
 
 export function computeItemPatch(
@@ -362,7 +370,13 @@ export function computeItemPatch(
     }
   }
 
-  return { ok: true, value: { setAttrs, removeAttrs } };
+  const requiresPackedByExists =
+    setAttrs.Status === 'packed' && !('packedBy' in body);
+
+  return {
+    ok: true,
+    value: { setAttrs, removeAttrs, requiresPackedByExists },
+  };
 }
 
 export function buildUpdateExpression(

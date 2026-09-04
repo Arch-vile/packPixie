@@ -375,12 +375,24 @@ export function apiRoutes(
                   .send({ error: patchResult.error }) as never;
               }
 
-              const { setAttrs, removeAttrs } = patchResult.value;
+              const { setAttrs, removeAttrs, requiresPackedByExists } =
+                patchResult.value;
               const {
                 UpdateExpression,
                 ExpressionAttributeNames,
                 ExpressionAttributeValues,
               } = buildUpdateExpression(setAttrs, removeAttrs);
+
+              // CR-04: the "packed requires packedBy" invariant was only
+              // checked against a stale, request-scoped read above. When
+              // this write sets Status to 'packed' without also writing
+              // PackedBy in the same request, re-assert PackedBy still
+              // exists atomically at write time so a concurrent request
+              // that cleared it cannot race this one into an invalid
+              // persisted state.
+              const conditionExpression = requiresPackedByExists
+                ? 'attribute_exists(PK) AND attribute_exists(PackedBy)'
+                : 'attribute_exists(PK)';
 
               try {
                 const updateResult = await dynamoDBClient.send(
@@ -397,7 +409,7 @@ export function apiRoutes(
                     ).length
                       ? ExpressionAttributeValues
                       : undefined,
-                    ConditionExpression: 'attribute_exists(PK)',
+                    ConditionExpression: conditionExpression,
                     ReturnValues: 'ALL_NEW',
                   }),
                 );
@@ -414,6 +426,14 @@ export function apiRoutes(
                   (error as { name?: string }).name ===
                   'ConditionalCheckFailedException'
                 ) {
+                  if (requiresPackedByExists) {
+                    return reply
+                      .status(409)
+                      .send({
+                        error:
+                          'Item was modified concurrently — refresh and retry',
+                      }) as never;
+                  }
                   return reply
                     .status(404)
                     .send({ error: 'Item not found' }) as never;
