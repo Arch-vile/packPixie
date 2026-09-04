@@ -23,9 +23,9 @@ Requirements for this milestone (v2.0). Each maps to exactly one roadmap phase.
 - [ ] **ITEM-01**: A participant can add an item row; it defaults `PackedBy` to the current user and `Status` to unset
 - [ ] **ITEM-02**: A participant can edit any field of any item row (Name, Quantity, Weight, PackedBy, Status, Category, Consumable) and the change persists
 - [ ] **ITEM-03**: A participant can delete an item row after confirming a delete dialog (hard delete, no undo)
-- [ ] **ITEM-04**: An item can be marked `packed` only when `PackedBy` is set — enforced server-side
-- [ ] **ITEM-05**: Clearing `PackedBy` atomically resets the row's `Status` to unset — enforced server-side
-- [ ] **ITEM-06**: Quantity and Weight persist as numbers; an unset Weight is stored absent (shown blank), distinct from `0`
+- [x] **ITEM-04**: An item can be marked `packed` only when `PackedBy` is set — enforced server-side
+- [x] **ITEM-05**: Clearing `PackedBy` atomically resets the row's `Status` to unset — enforced server-side
+- [x] **ITEM-06**: Quantity and Weight persist as numbers; an unset Weight is stored absent (shown blank), distinct from `0`
 
 ### Packing View
 
@@ -89,9 +89,9 @@ Which phases cover which requirements. Populated during roadmap creation.
 | ITEM-01 | Phase 8 | Pending |
 | ITEM-02 | Phase 8 | Pending |
 | ITEM-03 | Phase 8 | Pending |
-| ITEM-04 | Phase 7 | Pending |
-| ITEM-05 | Phase 7 | Pending |
-| ITEM-06 | Phase 7 | Pending |
+| ITEM-04 | Phase 7 | Complete |
+| ITEM-05 | Phase 7 | Complete |
+| ITEM-06 | Phase 7 | Complete |
 | VIEW-01 | Phase 9 | Pending |
 | VIEW-02 | Phase 9 | Pending |
 | VIEW-03 | Phase 9 | Pending |
