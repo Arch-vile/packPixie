@@ -50,16 +50,16 @@ Any developer can run `pnpm test:e2e` and get a reliable green/red signal agains
 - ✓ Tests pass both locally and in CI without code changes — v1.0
 - ✓ Shared `Item`/`ItemStatus`/`TripDetailResponse` read contract lives in `@packpixie/model` — v2.0 Phase 5
 - ✓ Remove the `Comments` scaffold (endpoint + client component) — v2.0 Phase 5
+- ✓ Participant can open a trip and view its packing table (single-query load) — v2.0 Phase 6
+- ✓ Any participant can edit any row; `packed` requires PackedBy; clearing PackedBy resets Status — v2.0 Phase 7 (server-enforced; also closes a reverse-direction concurrent-write race the initial implementation missed, see Key Decisions)
 
 ### Active
 
 <!-- v2.0 Packing Table MVP — formalized with REQ-IDs in REQUIREMENTS.md -->
 
-- [ ] Participant can open a trip and view its packing table (single-query load)
-- [ ] Participant can add, edit, and delete item rows (Name, Quantity, Weight, PackedBy, Status, Category, Consumable)
+- [ ] Participant can add, edit, and delete item rows (Name, Quantity, Weight, PackedBy, Status, Category, Consumable) — write API done (Phase 7); UI still pending (Phase 8)
 - [ ] New rows default PackedBy to the current user
 - [ ] Packing view defaults to `PackedBy = me` with a status filter and a show-all toggle
-- [ ] Any participant can edit any row; `packed` requires PackedBy; clearing PackedBy resets Status
 - [ ] E2E suite covers the item table happy path
 
 ### Out of Scope
@@ -78,6 +78,7 @@ Any developer can run `pnpm test:e2e` and get a reliable green/red signal agains
 | `apps/e2e` workspace package over root-level directory | Consistent with monorepo structure; can have its own deps, tsconfig, and scripts      | ✓ Good |
 | GitHub Actions for CI                                  | Project is on GitHub; native integration, no extra infra                              | ✓ Good |
 | Playwright over Cypress                                | Better TypeScript support, ESM native, parallel workers, network interception         | ✓ Good |
+| Last-write-wins for ordinary field races; 409 only for the two invariant-protecting races (packed-item delete, packed-without-PackedBy) | Avoids version-field/optimistic-locking complexity for a low-stakes packing list, while still atomically protecting the two states that can never be valid | ✓ Good — confirmed by developer post-Phase-7 UAT (2026-09-05), including after discovering and fixing a reverse-direction race the initial guard missed |
 
 ## Evolution
 
@@ -100,4 +101,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-08-12 after completing Phase 5 (Shared Item Model & Comments Cleanup)_
+_Last updated: 2026-09-05 after completing Phase 7 (Item Write API & Server-Authoritative Rules)_

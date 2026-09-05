@@ -2,36 +2,36 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Packing Table MVP
-current_phase: 07
-current_phase_name: item-write-api-server-authoritative-rules
-status: executing
+current_phase: 8
+current_phase_name: Trip-Detail Inline-Edit Table (UI)
+status: planning
 stopped_at: Phase 7 context gathered
-last_updated: "2026-09-04T14:58:08.321Z"
-last_activity: 2026-09-04
-last_activity_desc: Phase 07 execution started
+last_updated: "2026-09-05T12:44:54.525Z"
+last_activity: 2026-09-05
+last_activity_desc: Phase 07 complete, transitioned to Phase 8
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 4
-  completed_plans: 3
-  percent: 33
+  completed_plans: 4
+  percent: 50
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-08-11)
+See: .planning/PROJECT.md (updated 2026-09-05)
 
 **Core value:** A participant can open a trip and manage its shared packing table — the first genuinely usable slice of the actual PackPixie product.
-**Current focus:** Phase 07 — item-write-api-server-authoritative-rules
+**Current focus:** Phase 8 — trip-detail-inline-edit-table-(ui)
 
 ## Current Position
 
-Phase: 07 (item-write-api-server-authoritative-rules) — EXECUTING
-Plan: 1 of 1
-Status: Executing Phase 07
-Last activity: 2026-09-04 — Phase 07 execution started
+Phase: 8 — Trip-Detail Inline-Edit Table (UI)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-09-05 — Phase 07 complete, transitioned to Phase 8
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -39,7 +39,7 @@ Progress: [░░░░░░░░░░] 0%
 
 **Velocity:**
 
-- Total plans completed: 1
+- Total plans completed: 2
 - Average duration: —
 - Total execution time: —
 
@@ -48,6 +48,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 05 | 1 | - | - |
+| 07 | 1 | - | - |
 
 **Recent Trend:**
 
@@ -68,6 +69,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Locked decisions affecti
 - Delete requires a confirmation dialog (Phase 8)
 - `UsedBy`/`Carried` kept entirely unset and excluded from typed DTOs (Phase 5)
 - Identity keys off lowercased JWT email, not `sub`/`UserId`; 404 (not 403) for non-members (Phase 6)
+- Last-write-wins for ordinary field races; `409` only for the two invariant-protecting races (packed-item delete, packed-without-PackedBy in either direction) — confirmed post-Phase-7 UAT (Phase 7)
 
 ### Pending Todos
 
@@ -75,8 +77,9 @@ Decisions are logged in PROJECT.md Key Decisions table. Locked decisions affecti
 
 ### Blockers/Concerns
 
-- Phase 7 (Item write API) is the densest pitfall cluster — reserved words (`Status`/`Name`), REMOVE-vs-SET, numeric coercion, `attribute_exists`, atomic clear-and-reset. Flag for deeper discuss during planning.
+- **Phase 6's manual UAT (M1-M4) was never actually run** — `06-UAT.md`/`06-VERIFICATION.md` still show 4 pending/human_needed items. Discovered during Phase 7 progress-sync (2026-09-05); not a regression, just never closed out. Should be resolved via `/gsd-verify-work 06` before shipping the milestone.
 - Phase 8 router-vs-`useState` (locked to react-router) and inline-edit React state model (keying, focus, optimistic reconcile) warrant a design pass.
+- Phase 8 UI must handle the API's `409 { error: 'Item was modified concurrently — refresh and retry' }` response — added post-Phase-7-UAT for the two invariant-protecting write races (packed-item delete, packed-without-PackedBy in either direction). The inline-edit table needs a retry/refresh UX for this, not just happy-path 200 handling.
 - Phase 10 second-participant strategy (trip-create `participantEmails` vs direct DynamoDB Local seeding) should be decided deliberately before writing the spec.
 
 ## Deferred Items
@@ -91,6 +94,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-09-04T14:24:51.020Z
-Stopped at: Phase 7 context gathered
-Resume file: .planning/phases/07-item-write-api-server-authoritative-rules/07-CONTEXT.md
+Last session: 2026-09-05T12:44:54.525Z
+Stopped at: Phase 7 complete, ready to plan Phase 8
+Resume file: None

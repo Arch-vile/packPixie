@@ -25,7 +25,7 @@ Full detail: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 
 - [x] **Phase 5: Shared Item Model & Comments Cleanup** - Land the `Item`/trip-detail DTO contract and remove the dead Comments scaffold (completed 2026-08-12)
 - [ ] **Phase 6: Trip-Detail Read API & Participation Guard** - Single-query snapshot endpoint gated by an email-keyed 404 guard
-- [ ] **Phase 7: Item Write API & Server-Authoritative Rules** - Create/edit/delete endpoints with server-enforced invariants and typed numbers
+- [x] **Phase 7: Item Write API & Server-Authoritative Rules** - Create/edit/delete endpoints with server-enforced invariants and typed numbers (completed 2026-09-05)
 - [ ] **Phase 8: Trip-Detail Inline-Edit Table (UI)** - Open a trip page and add, edit, and delete item rows in an inline table
 - [ ] **Phase 9: Packing View Filters** - Default `PackedBy = me` view, Status filter, and show-all toggle
 - [ ] **Phase 10: E2E Item-Table Coverage** - Playwright happy path with a seeded second participant
@@ -132,7 +132,7 @@ Phases execute in numeric order: 5 → 6 → 7 → 8 → 9 → 10
 |-------|-----------|----------------|--------|-----------|
 | 5. Shared Item Model & Comments Cleanup | v2.0 | 1/1 | Complete    | 2026-08-12 |
 | 6. Trip-Detail Read API & Participation Guard | v2.0 | 2/2 | In Progress|  |
-| 7. Item Write API & Server-Authoritative Rules | v2.0 | 1/1 | In Progress|  |
+| 7. Item Write API & Server-Authoritative Rules | v2.0 | 1/1 | Complete    | 2026-09-05 |
 | 8. Trip-Detail Inline-Edit Table (UI) | v2.0 | 0/TBD | Not started | - |
 | 9. Packing View Filters | v2.0 | 0/TBD | Not started | - |
 | 10. E2E Item-Table Coverage | v2.0 | 0/TBD | Not started | - |
