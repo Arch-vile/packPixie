@@ -4,35 +4,45 @@ export type Config = {
   dynamoDBTable: string;
   cognitoUserPoolId: string;
   cognitoClientId: string;
+  // Only ever true outside NODE_ENV=production (enforced in index.ts). When true,
+  // the auth plugin skips Cognito verification and trusts a hand-crafted
+  // Authorization header instead — local API testing only.
+  authDevBypass: boolean;
 };
 
 export function config() {
-  const conf = {} as Config;
+  const conf: Partial<Config> = {};
 
   return {
     dynamoDBTable(tableName?: string) {
-      if (!tableName) {
-        throw new Error('DynamoDB table name is required');
-      }
       conf.dynamoDBTable = tableName;
       return this;
     },
     cognitoUserPoolId(id?: string) {
-      if (!id) {
-        throw new Error('Cognito user pool ID is required');
-      }
       conf.cognitoUserPoolId = id;
       return this;
     },
     cognitoClientId(id?: string) {
-      if (!id) {
-        throw new Error('Cognito client ID is required');
-      }
       conf.cognitoClientId = id;
       return this;
     },
+    authDevBypass(enabled: boolean) {
+      conf.authDevBypass = enabled;
+      return this;
+    },
     build(): Config {
-      return conf as Config;
+      if (!conf.dynamoDBTable) {
+        throw new Error('DynamoDB table name is required');
+      }
+      if (!conf.authDevBypass) {
+        if (!conf.cognitoUserPoolId) {
+          throw new Error('Cognito user pool ID is required');
+        }
+        if (!conf.cognitoClientId) {
+          throw new Error('Cognito client ID is required');
+        }
+      }
+      return { ...conf, authDevBypass: conf.authDevBypass ?? false } as Config;
     },
   };
 }

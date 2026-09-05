@@ -9,10 +9,15 @@ App for managing gear for outdoor adventures
 For local development, you need to run DynamoDB locally using Docker:
 
 ```bash
-# Start DynamoDB Local
-docker run -d -p 8000:8000 amazon/dynamodb-local
+# Start DynamoDB Local. -sharedDb is required: without it, DynamoDB Local
+# partitions tables by AWS credentials + region, so a table created with the
+# AWS CLI's default credentials would be invisible to the app (which connects
+# with dummy credentials) even though it "exists". -inMemory means all data is
+# lost on restart — fine for local dev, but the table must be recreated every
+# time the container restarts.
+docker run -d -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb
 
-# Create the local table (one-time setup)
+# Create the local table (needed again after every container restart)
 aws dynamodb create-table \
   --endpoint-url http://localhost:8000 \
   --region us-east-1 \
@@ -39,6 +44,35 @@ export DYNAMODB_TABLE=packpixie-local
 
 # Start the development servers
 pnpm dev
+```
+
+On startup, `apps/api` logs which DynamoDB endpoint it's configured to use and
+checks that it can read the configured table, logging a clear error right
+away (wrong endpoint, missing table, etc.) instead of only surfacing it on the
+first request. This check doesn't block the server from listening, since some
+environments (e.g. the E2E test harness) intentionally bring DynamoDB up only
+after the API has already started.
+
+### Calling protected API routes without logging in
+
+Protected routes normally require a Cognito ID token. For local testing (curl,
+Postman, scripts), set `AUTH_DEV_BYPASS=true` when starting `apps/api` — this is
+only honored when `NODE_ENV=development` (which `pnpm --filter api dev` sets
+automatically) and is ignored under any other `NODE_ENV`, so it can't be
+enabled by accident in a deployed environment.
+
+```bash
+AUTH_DEV_BYPASS=true pnpm --filter api dev
+```
+
+With the flag on, the API skips Cognito verification and instead trusts a
+hand-crafted `Authorization` header whose token is JSON with `sub` and `email`:
+
+```bash
+curl http://localhost:3001/api/trips \
+  -H 'Authorization: Bearer {"sub":"dev-user-1","email":"dev@example.com"}' \
+  -H 'Content-Type: application/json' \
+  -d '{"tripName":"Test Trip","participantEmails":[]}'
 ```
 
 ## Accessing production

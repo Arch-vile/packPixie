@@ -15,11 +15,13 @@ declare module 'fastify' {
 }
 
 export function authPlugin(conf: Config) {
-  const verifier = CognitoJwtVerifier.create({
-    userPoolId: conf.cognitoUserPoolId,
-    tokenUse: 'id',
-    clientId: conf.cognitoClientId,
-  });
+  const verifier = conf.authDevBypass
+    ? null
+    : CognitoJwtVerifier.create({
+        userPoolId: conf.cognitoUserPoolId,
+        tokenUse: 'id',
+        clientId: conf.cognitoClientId,
+      });
 
   return fp(async function (fastify: FastifyInstance) {
     fastify.decorateRequest('user', undefined as unknown as AuthUser);
@@ -31,8 +33,32 @@ export function authPlugin(conf: Config) {
       }
 
       const token = authHeader.slice(7);
+
+      // AUTH_DEV_BYPASS: skip Cognito verification and trust a hand-crafted
+      // payload instead, e.g. Authorization: Bearer {"sub":"u1","email":"a@b.com"}
+      if (conf.authDevBypass) {
+        let payload: unknown;
+        try {
+          payload = JSON.parse(token);
+        } catch {
+          payload = undefined;
+        }
+        const user = payload as Partial<AuthUser> | undefined;
+        if (
+          !user ||
+          typeof user.sub !== 'string' ||
+          typeof user.email !== 'string'
+        ) {
+          return reply.unauthorized(
+            'AUTH_DEV_BYPASS: expected Bearer token to be JSON like {"sub":"...","email":"..."}',
+          );
+        }
+        request.user = { sub: user.sub, email: user.email };
+        return;
+      }
+
       try {
-        const payload = await verifier.verify(token);
+        const payload = await verifier!.verify(token);
         request.user = {
           sub: payload.sub,
           email: payload.email as string,

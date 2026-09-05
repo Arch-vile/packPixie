@@ -28,5 +28,8 @@ export default async function globalTeardown(
     // Non-fatal
   }
 
-  // Container cleanup is handled automatically by the Ryuk reaper on process exit
+  // The DynamoDB Local container itself is intentionally left running — it's
+  // started (or reused) by start-dynamodb-local.sh on each `pnpm test:e2e`,
+  // and only its table is torn down here to keep test state clean between
+  // runs. `docker rm -f packpixie-e2e-dynamodb-local` removes it entirely.
 }

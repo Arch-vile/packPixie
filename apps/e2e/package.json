@@ -5,14 +5,13 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "e2e": "playwright test",
+    "e2e": "bash start-dynamodb-local.sh && playwright test",
     "install:browsers": "playwright install --with-deps chromium"
   },
   "devDependencies": {
     "@playwright/test": "1.60.0",
     "@types/node": "^20.14.0",
     "@aws-sdk/client-dynamodb": "^3.962.0",
-    "testcontainers": "12.0.2",
     "dotenv": "17.3.1"
   }
 }
