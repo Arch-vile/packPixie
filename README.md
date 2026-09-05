@@ -60,7 +60,7 @@ automatically) and is ignored under any other `NODE_ENV`, so it can't be
 enabled by accident in a deployed environment.
 
 ```bash
-AUTH_DEV_BYPASS=true DYNAMODB_TABLE=packpixie-local pnpm --filter api dev
+AUTH_DEV_BYPASS=true pnpm --filter api dev
 ```
 
 With the flag on, the API skips Cognito verification and instead trusts a
