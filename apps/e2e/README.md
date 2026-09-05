@@ -1,12 +1,11 @@
 # PackPixie E2E Tests
 
-End-to-end tests using Playwright + testcontainers. Running `pnpm test:e2e` starts the
-full application stack automatically — no manual pre-steps required beyond the one-time
-setup below.
+End-to-end tests using Playwright. Running `pnpm test:e2e` starts the full application
+stack automatically — no manual pre-steps required beyond the one-time setup below.
 
 ## Prerequisites
 
-- **Docker** — required for DynamoDB Local, started automatically via testcontainers
+- **Docker** — required for DynamoDB Local, started automatically by `start-dynamodb-local.sh`
 - **Node.js ≥ 20.11** and **pnpm ≥ 10** (standard repo requirements)
 - A deployed PackPixie Cognito User Pool (the E2E test user is provisioned by Terraform — see `infra/cognito.tf`)
 - AWS credentials configured locally with `secretsmanager:GetSecretValue` on `pack-pixie/*` (used by `setup-env.sh`)
@@ -48,13 +47,12 @@ cd apps/e2e && pnpm exec playwright test --ui
 
 `pnpm test:e2e` automatically performs all these steps before any test runs:
 
-1. Starts DynamoDB Local in Docker on host port 8000 (via testcontainers), with `-sharedDb` so the API and the test harness share one database (see Troubleshooting for why this flag is mandatory)
-2. Starts the Fastify API on port 3001 (connected to DynamoDB Local)
-3. Starts the Vite dev server on port 5173
-4. Creates the `packpixie-test` DynamoDB table with the production schema (PK/SK + GSI1)
-5. Logs in the Cognito test user through the browser UI and saves the session to `.auth/user.json`
-6. Runs all tests — each test starts already authenticated
-7. Deletes the DynamoDB table and cleans up containers on exit
+1. Starts DynamoDB Local in Docker on host port 8000 (`start-dynamodb-local.sh`), with `-sharedDb` so the API and the test harness share one database (see Troubleshooting for why this flag is mandatory) — reuses an already-running container across repeated local runs instead of starting a new one each time
+2. Starts the Fastify API on port 3001 (connected to DynamoDB Local) and the Vite dev server on port 5173 — must happen after step 1, since the API checks DynamoDB connectivity on its own startup
+3. Creates the `packpixie-test` DynamoDB table with the production schema (PK/SK + GSI1)
+4. Logs in the Cognito test user through the browser UI and saves the session to `.auth/user.json`
+5. Runs all tests — each test starts already authenticated
+6. Deletes the DynamoDB table on exit (the container itself is left running for the next run — remove it with `docker rm -f packpixie-e2e-dynamodb-local`)
 
 ## CI
 
@@ -89,11 +87,14 @@ With this configured, PRs cannot merge if the E2E job fails.
 ## Troubleshooting
 
 **Port 8000 already in use**
-DynamoDB Local requires host port 8000. If another process is using it:
+DynamoDB Local requires host port 8000. `start-dynamodb-local.sh` reuses its own
+container (`packpixie-e2e-dynamodb-local`) across runs, but something else — most
+often a manually-started DynamoDB Local for regular app development (see the root
+README) — can already be holding port 8000:
 
 ```bash
-lsof -i :8000        # identify the process
-kill -9 <PID>        # stop it
+docker ps --filter publish=8000   # identify what's holding the port
+docker rm -f packpixie-e2e-dynamodb-local  # remove the e2e container specifically
 ```
 
 **"storageState file not found" error**
@@ -114,7 +115,7 @@ Terraform-provisioned test user (stored in Secrets Manager under
 
 **API returns 500 "Cannot do operations on a non-existent table"**
 This is the failure mode `-sharedDb` prevents — if you remove that flag from
-`global-setup.ts`, expect it to return.
+`start-dynamodb-local.sh`, expect it to return.
 
 DynamoDB Local in `-inMemory` mode, **without** `-sharedDb`, does not keep one database.
 It silently partitions storage into a separate hidden database per **(AWS access key ID +
@@ -134,7 +135,8 @@ regardless of any future credential or region drift:
   credentials landed it in a *different* namespace — the original cause of this 500.
 
 `-sharedDb` collapses the instance to a single database that every client shares regardless
-of credentials or region, eliminating the split. It is scoped to the ephemeral, in-memory
-test container only — it does **not** affect any DynamoDB you run for local app development
-(separate process, separate data, destroyed after the run). The auth test passes without the
-flag because it never touches DynamoDB; only the trip test exercises a real DB write.
+of credentials or region, eliminating the split. It is scoped to the e2e test container
+(`packpixie-e2e-dynamodb-local`, `-inMemory` so its data doesn't survive a restart) only —
+it does **not** affect any DynamoDB you run for local app development (separate container,
+separate data). The auth test passes without the flag because it never touches DynamoDB;
+only the trip test exercises a real DB write.
