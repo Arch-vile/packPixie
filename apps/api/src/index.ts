@@ -67,25 +67,36 @@ await fastify.register(apiRoutes(conf, dynamoDBClient));
 // Lambda handler export
 export const handler = awsLambdaFastify(fastify);
 
+// Logs whether DynamoDB is actually reachable, without blocking or failing
+// server startup on it — some environments (e.g. the E2E harness's Testcontainers
+// setup) intentionally bring DynamoDB up only after this server starts listening.
+function logDynamoDBConnectivity() {
+  fastify.log.info(
+    `DynamoDB endpoint: ${describeDynamoDBEndpoint()} (table "${conf.dynamoDBTable}")`,
+  );
+  checkDynamoDBConnection(conf, dynamoDBClient)
+    .then((dbStatus) => {
+      if (dbStatus.status === 'connected') {
+        fastify.log.info('DynamoDB connectivity check passed');
+      } else {
+        fastify.log.error(
+          `DynamoDB connectivity check failed: ${dbStatus.message}`,
+        );
+      }
+    })
+    .catch((err) => fastify.log.error({ err }, 'DynamoDB connectivity check errored'));
+}
+
 // Start the server (only when running locally)
 const start = async () => {
   try {
-    fastify.log.info(
-      `DynamoDB endpoint: ${describeDynamoDBEndpoint()} (table "${conf.dynamoDBTable}")`,
-    );
-
-    const dbStatus = await checkDynamoDBConnection(conf, dynamoDBClient);
-    if (dbStatus.status !== 'connected') {
-      throw new Error(`DynamoDB connectivity check failed: ${dbStatus.message}`);
-    }
-    fastify.log.info('DynamoDB connectivity check passed');
-
     const port = Number(process.env.PORT) || 3001;
     const host = process.env.HOST || '0.0.0.0';
 
     await fastify.listen({ port, host });
 
     fastify.log.info(`Server listening on ${host}:${port}`);
+    logDynamoDBConnectivity();
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

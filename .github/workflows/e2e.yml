@@ -30,38 +30,6 @@ jobs:
       - name: Build model package
         run: pnpm --filter model build
 
-      # -sharedDb is required: without it, DynamoDB Local partitions tables by
-      # AWS credentials + region, so a table created here (via whatever
-      # credentials this step's `aws` CLI resolves to) could be invisible to
-      # the API server's dummy local/local credentials (see dynamodb.ts).
-      - name: Start DynamoDB Local
-        run: docker run -d -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb
-
-      # Table name must match DYNAMODB_TABLE in apps/e2e/.env.example. Uses its
-      # own dummy credentials (same as the API's DynamoDB Local client) since
-      # this step runs before "Configure AWS credentials" and DynamoDB Local
-      # still requires *some* credentials present to sign requests.
-      - name: Create local DynamoDB table
-        env:
-          AWS_ACCESS_KEY_ID: local
-          AWS_SECRET_ACCESS_KEY: local
-        run: |
-          aws dynamodb create-table \
-            --endpoint-url http://localhost:8000 \
-            --region us-east-1 \
-            --table-name packpixie-test \
-            --attribute-definitions \
-              AttributeName=PK,AttributeType=S \
-              AttributeName=SK,AttributeType=S \
-              AttributeName=GSI1PK,AttributeType=S \
-              AttributeName=GSI1SK,AttributeType=S \
-            --key-schema \
-              AttributeName=PK,KeyType=HASH \
-              AttributeName=SK,KeyType=RANGE \
-            --billing-mode PAY_PER_REQUEST \
-            --global-secondary-indexes \
-              '[{"IndexName":"GSI1","KeySchema":[{"AttributeName":"GSI1PK","KeyType":"HASH"},{"AttributeName":"GSI1SK","KeyType":"RANGE"}],"Projection":{"ProjectionType":"ALL"}}]'
-
       # AWS creds let setup-env.sh read the Cognito config and test-user
       # credentials from Secrets Manager — same secrets the deploy workflows use.
       - name: Configure AWS credentials

@@ -47,9 +47,11 @@ pnpm dev
 ```
 
 On startup, `apps/api` logs which DynamoDB endpoint it's configured to use and
-verifies it can read the configured table before it starts listening — if that
-check fails (wrong endpoint, missing table, etc.) the process logs the error
-and exits immediately instead of accepting requests that would fail later.
+checks that it can read the configured table, logging a clear error right
+away (wrong endpoint, missing table, etc.) instead of only surfacing it on the
+first request. This check doesn't block the server from listening, since some
+environments (e.g. the E2E test harness) intentionally bring DynamoDB up only
+after the API has already started.
 
 ### Calling protected API routes without logging in
 
