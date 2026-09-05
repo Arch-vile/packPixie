@@ -1,4 +1,3 @@
-import { DescribeTableCommand } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient,
   QueryCommand,
@@ -7,7 +6,6 @@ import {
   BatchWriteCommand,
 } from '@aws-sdk/lib-dynamodb';
 import {
-  DBStatus,
   StatusResponse,
   CreateTripRequest,
   CreateTripResponse,
@@ -18,6 +16,7 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { Config } from '../config.js';
 import { authPlugin } from '../plugins/auth.js';
+import { checkDynamoDBConnection } from '../lib/dynamodb.js';
 import { readFileSync } from 'fs';
 import { randomUUID } from 'crypto';
 
@@ -31,38 +30,6 @@ try {
   appVersion = versionData.version;
 } catch (_error) {
   appVersion = 'error';
-}
-
-// Check DynamoDB connectivity
-async function checkDynamoDB(
-  conf: Config,
-  dynamoDBClient: DynamoDBDocumentClient,
-): Promise<DBStatus> {
-  const tableName = conf.dynamoDBTable;
-
-  if (!tableName) {
-    return {
-      status: 'disconnected' as const,
-      message: 'DynamoDB table name not configured',
-    };
-  }
-
-  try {
-    await dynamoDBClient.send(
-      new DescribeTableCommand({
-        TableName: tableName,
-      }),
-    );
-    return {
-      status: 'connected' as const,
-      message: 'Successfully connected to DynamoDB',
-    };
-  } catch (error) {
-    return {
-      status: 'error' as const,
-      message: error instanceof Error ? error.message : 'Unknown error',
-    };
-  }
 }
 
 export function apiRoutes(
@@ -81,7 +48,7 @@ export function apiRoutes(
         fastify.get(
           '/status',
           async (_request, _reply): Promise<StatusResponse> => {
-            const dbStatus = await checkDynamoDB(conf, dynamoDBClient);
+            const dbStatus = await checkDynamoDBConnection(conf, dynamoDBClient);
 
             return {
               status: 'running',

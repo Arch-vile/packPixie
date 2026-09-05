@@ -9,10 +9,15 @@ App for managing gear for outdoor adventures
 For local development, you need to run DynamoDB locally using Docker:
 
 ```bash
-# Start DynamoDB Local
-docker run -d -p 8000:8000 amazon/dynamodb-local
+# Start DynamoDB Local. -sharedDb is required: without it, DynamoDB Local
+# partitions tables by AWS credentials + region, so a table created with the
+# AWS CLI's default credentials would be invisible to the app (which connects
+# with dummy credentials) even though it "exists". -inMemory means all data is
+# lost on restart — fine for local dev, but the table must be recreated every
+# time the container restarts.
+docker run -d -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb
 
-# Create the local table (one-time setup)
+# Create the local table (needed again after every container restart)
 aws dynamodb create-table \
   --endpoint-url http://localhost:8000 \
   --region us-east-1 \
@@ -41,6 +46,11 @@ export DYNAMODB_TABLE=packpixie-local
 pnpm dev
 ```
 
+On startup, `apps/api` logs which DynamoDB endpoint it's configured to use and
+verifies it can read the configured table before it starts listening — if that
+check fails (wrong endpoint, missing table, etc.) the process logs the error
+and exits immediately instead of accepting requests that would fail later.
+
 ### Calling protected API routes without logging in
 
 Protected routes normally require a Cognito ID token. For local testing (curl,
@@ -50,7 +60,7 @@ automatically) and is ignored under any other `NODE_ENV`, so it can't be
 enabled by accident in a deployed environment.
 
 ```bash
-AUTH_DEV_BYPASS=true pnpm --filter api dev
+AUTH_DEV_BYPASS=true DYNAMODB_TABLE=packpixie-local pnpm --filter api dev
 ```
 
 With the flag on, the API skips Cognito verification and instead trusts a

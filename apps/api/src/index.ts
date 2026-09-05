@@ -6,7 +6,11 @@ import awsLambdaFastify from '@fastify/aws-lambda';
 import { apiRoutes } from './routes/api.js';
 import { config, Config } from './config.js';
 import 'dotenv/config';
-import { createDynamoDBClient } from './lib/dynamodb.js';
+import {
+  createDynamoDBClient,
+  checkDynamoDBConnection,
+  describeDynamoDBEndpoint,
+} from './lib/dynamodb.js';
 
 console.log(
   'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
@@ -66,6 +70,16 @@ export const handler = awsLambdaFastify(fastify);
 // Start the server (only when running locally)
 const start = async () => {
   try {
+    fastify.log.info(
+      `DynamoDB endpoint: ${describeDynamoDBEndpoint()} (table "${conf.dynamoDBTable}")`,
+    );
+
+    const dbStatus = await checkDynamoDBConnection(conf, dynamoDBClient);
+    if (dbStatus.status !== 'connected') {
+      throw new Error(`DynamoDB connectivity check failed: ${dbStatus.message}`);
+    }
+    fastify.log.info('DynamoDB connectivity check passed');
+
     const port = Number(process.env.PORT) || 3001;
     const host = process.env.HOST || '0.0.0.0';
 
