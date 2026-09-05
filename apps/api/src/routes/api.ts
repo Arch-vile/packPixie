@@ -383,8 +383,12 @@ export function apiRoutes(
                   .send({ error: patchResult.error }) as never;
               }
 
-              const { setAttrs, removeAttrs, requiresPackedByExists } =
-                patchResult.value;
+              const {
+                setAttrs,
+                removeAttrs,
+                requiresPackedByExists,
+                requiresStatusNotPacked,
+              } = patchResult.value;
               const {
                 UpdateExpression,
                 ExpressionAttributeNames,
@@ -397,10 +401,28 @@ export function apiRoutes(
               // PackedBy in the same request, re-assert PackedBy still
               // exists atomically at write time so a concurrent request
               // that cleared it cannot race this one into an invalid
-              // persisted state.
-              const conditionExpression = requiresPackedByExists
-                ? 'attribute_exists(PK) AND attribute_exists(PackedBy)'
-                : 'attribute_exists(PK)';
+              // persisted state. Symmetrically, when this write clears
+              // PackedBy without touching Status (because the stale read
+              // saw a non-'packed' Status), re-assert Status is still not
+              // 'packed' at write time so a concurrent request that just
+              // set it cannot race this one into the same invalid state.
+              const conditionParts = ['attribute_exists(PK)'];
+              if (requiresPackedByExists) {
+                conditionParts.push('attribute_exists(PackedBy)');
+              }
+              if (requiresStatusNotPacked) {
+                conditionParts.push(
+                  '(attribute_not_exists(#status) OR #status <> :packed)',
+                );
+              }
+              const conditionExpression = conditionParts.join(' AND ');
+
+              const conditionNames = requiresStatusNotPacked
+                ? { ...ExpressionAttributeNames, '#status': 'Status' }
+                : ExpressionAttributeNames;
+              const conditionValues = requiresStatusNotPacked
+                ? { ...ExpressionAttributeValues, ':packed': 'packed' }
+                : ExpressionAttributeValues;
 
               try {
                 const updateResult = await dynamoDBClient.send(
@@ -411,11 +433,10 @@ export function apiRoutes(
                       SK: `ITEM#${itemId}`,
                     },
                     UpdateExpression,
-                    ExpressionAttributeNames,
-                    ExpressionAttributeValues: Object.keys(
-                      ExpressionAttributeValues,
-                    ).length
-                      ? ExpressionAttributeValues
+                    ExpressionAttributeNames: conditionNames,
+                    ExpressionAttributeValues: Object.keys(conditionValues)
+                      .length
+                      ? conditionValues
                       : undefined,
                     ConditionExpression: conditionExpression,
                     ReturnValues: 'ALL_NEW',
@@ -434,7 +455,7 @@ export function apiRoutes(
                   (error as { name?: string }).name ===
                   'ConditionalCheckFailedException'
                 ) {
-                  if (requiresPackedByExists) {
+                  if (requiresPackedByExists || requiresStatusNotPacked) {
                     return reply
                       .status(409)
                       .send({

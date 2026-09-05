@@ -236,6 +236,15 @@ export interface ItemPatchResult {
   // write cannot leave the item persisted as packed with no PackedBy
   // (CR-04).
   requiresPackedByExists: boolean;
+  // True when this update removes PackedBy without also touching Status
+  // (i.e. `current.Status` read as something other than 'packed', so this
+  // write leaves Status alone). That "leave Status alone" decision is based
+  // on the same possibly-stale `current` snapshot: a concurrent request can
+  // set Status to 'packed' between the read and this write. Callers must add
+  // an atomic ConditionExpression asserting Status is still not 'packed' at
+  // write time, so this write cannot leave the item persisted as packed
+  // with no PackedBy (CR-04 counterpart).
+  requiresStatusNotPacked: boolean;
 }
 
 export function computeItemPatch(
@@ -377,9 +386,18 @@ export function computeItemPatch(
   const requiresPackedByExists =
     setAttrs.Status === 'packed' && !('packedBy' in body);
 
+  const touchesStatus = 'Status' in setAttrs || removeAttrs.includes('Status');
+  const requiresStatusNotPacked =
+    removeAttrs.includes('PackedBy') && !touchesStatus;
+
   return {
     ok: true,
-    value: { setAttrs, removeAttrs, requiresPackedByExists },
+    value: {
+      setAttrs,
+      removeAttrs,
+      requiresPackedByExists,
+      requiresStatusNotPacked,
+    },
   };
 }
 

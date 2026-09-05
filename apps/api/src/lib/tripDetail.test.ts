@@ -306,6 +306,96 @@ describe('computeItemPatch', () => {
       assert.equal(result.error, 'No fields to update');
     }
   });
+
+  test('requiresPackedByExists is true when setting status packed without packedBy in the same request', () => {
+    const current = { PackedBy: 'a@b.com' };
+    const result = computeItemPatch(
+      current,
+      { status: 'packed' },
+      participantEmails,
+    );
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.value.requiresPackedByExists, true);
+      assert.equal(result.value.requiresStatusNotPacked, false);
+    }
+  });
+
+  test('requiresPackedByExists is false when packedBy is written in the same request', () => {
+    const current = {};
+    const result = computeItemPatch(
+      current,
+      { status: 'packed', packedBy: 'a@b.com' },
+      participantEmails,
+    );
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.value.requiresPackedByExists, false);
+    }
+  });
+
+  // Regression test for a TOCTOU gap discovered during phase-7 manual UAT:
+  // concurrently (a) clearing PackedBy on an item whose stale `current` read
+  // showed a non-'packed' Status, and (b) another request setting that same
+  // item's Status to 'packed', could both commit and leave the item
+  // persisted as `packed` with no `PackedBy`. requiresStatusNotPacked drives
+  // an atomic write-time re-check that closes this window (CR-04 counterpart).
+  test('requiresStatusNotPacked is true when clearing packedBy while current Status is not packed', () => {
+    const current = { PackedBy: 'a@b.com', Status: 'found' };
+    const result = computeItemPatch(
+      current,
+      { packedBy: null },
+      participantEmails,
+    );
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.value.requiresStatusNotPacked, true);
+      // Status untouched by this write — the write-time guard is what
+      // protects it, not a same-request removal.
+      assert.ok(!result.value.removeAttrs.includes('Status'));
+      assert.equal(result.value.setAttrs.Status, undefined);
+    }
+  });
+
+  test('requiresStatusNotPacked is false when clearing packedBy already cascades a Status removal', () => {
+    const current = { PackedBy: 'a@b.com', Status: 'packed' };
+    const result = computeItemPatch(
+      current,
+      { packedBy: null },
+      participantEmails,
+    );
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.value.requiresStatusNotPacked, false);
+    }
+  });
+
+  test('requiresStatusNotPacked is false when the request explicitly sets a different status alongside the clear', () => {
+    const current = { PackedBy: 'a@b.com', Status: 'found' };
+    const result = computeItemPatch(
+      current,
+      { packedBy: null, status: 'to-buy' },
+      participantEmails,
+    );
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.value.requiresStatusNotPacked, false);
+      assert.equal(result.value.setAttrs.Status, 'to-buy');
+    }
+  });
+
+  test('requiresStatusNotPacked is false when packedBy is not being cleared', () => {
+    const current = { Status: 'found' };
+    const result = computeItemPatch(
+      current,
+      { name: 'renamed' },
+      participantEmails,
+    );
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.value.requiresStatusNotPacked, false);
+    }
+  });
 });
 
 describe('buildUpdateExpression', () => {
