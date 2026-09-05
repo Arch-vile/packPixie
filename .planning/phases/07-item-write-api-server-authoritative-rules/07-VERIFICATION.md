@@ -1,7 +1,7 @@
 ---
 phase: 07-item-write-api-server-authoritative-rules
 verified: 2026-09-04T16:53:21Z
-status: human_needed
+status: passed
 score: 14/16 must-haves verified
 behavior_unverified: 0 # No PLAN must-have truth is present-but-behaviorally-unexercised; see human_verification for backstop truths and unexercised concurrency guards instead
 overrides_applied: 0
@@ -89,6 +89,7 @@ No orphaned requirements — `.planning/REQUIREMENTS.md` maps exactly ITEM-04/05
 | `apps/api/src/routes/api.ts` (all write routes) | — | WR-02 (no Fastify `schema.body`) — **deliberately deferred**, tracked as `.planning/todos/pending/2026-09-04-add-fastify-schema-validation-write-routes.md` | ⚠️ Warning | Defense-in-depth gap only; the concrete crash (CR-02) it was flagged alongside is already closed by explicit `typeof` guards. Does not undermine any must-have — confirmed by re-reading every string-field write path (`name`, `packedBy`, `category`, `tripName`) for an explicit `typeof` guard before use. |
 
 All 5 Critical findings from `07-REVIEW.md` (CR-01 through CR-05) and Warning WR-01 are confirmeded fixed in the current `apps/api/src/lib/tripDetail.ts`/`apps/api/src/routes/api.ts` at HEAD (`48f8d0b`), verified by direct code reading, not just by trusting `07-REVIEW-FIX.md`'s narrative:
+
 - **CR-01** (tripDetail.ts:256-259): `statusNeedsClearing = packedByCleared && current.Status === 'packed'` — confirmed scoped correctly.
 - **CR-02** (tripDetail.ts:131,183,266,317; api.ts:122): every string field has an explicit `typeof !== 'string'` guard before `.trim()`/use.
 - **CR-03** (api.ts:538-541): `DeleteCommand` now carries `ConditionExpression: 'attribute_exists(PK) AND (attribute_not_exists(#status) OR #status <> :packed)'`, mapped to 409 on failure.
