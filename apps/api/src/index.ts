@@ -13,9 +13,9 @@ console.log(
 );
 console.log(process.env.NODE_ENV);
 
-// Never honored when NODE_ENV=production, even if the env var is set there.
+// Only ever honored when NODE_ENV=development, even if the env var is set elsewhere.
 const authDevBypass =
-  process.env.NODE_ENV !== 'production' &&
+  process.env.NODE_ENV === 'development' &&
   process.env.AUTH_DEV_BYPASS === 'true';
 
 if (authDevBypass) {

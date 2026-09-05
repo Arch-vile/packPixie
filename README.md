@@ -45,8 +45,9 @@ pnpm dev
 
 Protected routes normally require a Cognito ID token. For local testing (curl,
 Postman, scripts), set `AUTH_DEV_BYPASS=true` when starting `apps/api` — this is
-only honored when `NODE_ENV` is not `production` and is ignored otherwise, so it
-can't be enabled by accident in a deployed environment.
+only honored when `NODE_ENV=development` (which `pnpm --filter api dev` sets
+automatically) and is ignored under any other `NODE_ENV`, so it can't be
+enabled by accident in a deployed environment.
 
 ```bash
 AUTH_DEV_BYPASS=true DYNAMODB_TABLE=packpixie-local pnpm --filter api dev
