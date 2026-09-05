@@ -13,10 +13,22 @@ console.log(
 );
 console.log(process.env.NODE_ENV);
 
+// Never honored when NODE_ENV=production, even if the env var is set there.
+const authDevBypass =
+  process.env.NODE_ENV !== 'production' &&
+  process.env.AUTH_DEV_BYPASS === 'true';
+
+if (authDevBypass) {
+  console.warn(
+    'AUTH_DEV_BYPASS is enabled — Cognito verification is DISABLED. Local dev only, never set this in production.',
+  );
+}
+
 const conf: Config = config()
   .dynamoDBTable(process.env.DYNAMODB_TABLE)
   .cognitoUserPoolId(process.env.COGNITO_USER_POOL_ID)
   .cognitoClientId(process.env.COGNITO_CLIENT_ID)
+  .authDevBypass(authDevBypass)
   .build();
 
 // Initialize DynamoDB client

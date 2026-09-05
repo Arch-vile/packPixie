@@ -41,6 +41,27 @@ export DYNAMODB_TABLE=packpixie-local
 pnpm dev
 ```
 
+### Calling protected API routes without logging in
+
+Protected routes normally require a Cognito ID token. For local testing (curl,
+Postman, scripts), set `AUTH_DEV_BYPASS=true` when starting `apps/api` — this is
+only honored when `NODE_ENV` is not `production` and is ignored otherwise, so it
+can't be enabled by accident in a deployed environment.
+
+```bash
+AUTH_DEV_BYPASS=true DYNAMODB_TABLE=packpixie-local pnpm --filter api dev
+```
+
+With the flag on, the API skips Cognito verification and instead trusts a
+hand-crafted `Authorization` header whose token is JSON with `sub` and `email`:
+
+```bash
+curl http://localhost:3001/api/trips \
+  -H 'Authorization: Bearer {"sub":"dev-user-1","email":"dev@example.com"}' \
+  -H 'Content-Type: application/json' \
+  -d '{"tripName":"Test Trip","participantEmails":[]}'
+```
+
 ## Accessing production
 
 To print the UI URL:
