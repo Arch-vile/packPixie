@@ -37,8 +37,14 @@ jobs:
       - name: Start DynamoDB Local
         run: docker run -d -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb
 
-      # Table name must match DYNAMODB_TABLE in apps/e2e/.env.example.
+      # Table name must match DYNAMODB_TABLE in apps/e2e/.env.example. Uses its
+      # own dummy credentials (same as the API's DynamoDB Local client) since
+      # this step runs before "Configure AWS credentials" and DynamoDB Local
+      # still requires *some* credentials present to sign requests.
       - name: Create local DynamoDB table
+        env:
+          AWS_ACCESS_KEY_ID: local
+          AWS_SECRET_ACCESS_KEY: local
         run: |
           aws dynamodb create-table \
             --endpoint-url http://localhost:8000 \
