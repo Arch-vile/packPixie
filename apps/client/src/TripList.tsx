@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { Trip } from '@packpixie/model';
 import { createTrip, getTrips } from './api/api';
 
@@ -154,17 +155,19 @@ export function TripList({ userEmail, trips, onTripsChange }: TripListProps) {
         <ul className="trip-items">
           {trips.map((trip) => (
             <li key={trip.tripId} className="trip-item">
-              <div className="trip-item-main">
-                <span className="trip-name" data-testid="trip-name">{trip.tripName}</span>
-                <span className="trip-date">
-                  {new Date(trip.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-              {trip.participants.length > 0 && (
-                <div className="trip-participants">
-                  {trip.participants.join(', ')}
+              <Link to={`/trips/${trip.tripId}`}>
+                <div className="trip-item-main">
+                  <span className="trip-name" data-testid="trip-name">{trip.tripName}</span>
+                  <span className="trip-date">
+                    {new Date(trip.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
-              )}
+                {trip.participants.length > 0 && (
+                  <div className="trip-participants">
+                    {trip.participants.join(', ')}
+                  </div>
+                )}
+              </Link>
             </li>
           ))}
         </ul>

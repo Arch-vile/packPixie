@@ -235,6 +235,12 @@ body {
   background: #fff;
 }
 
+.trip-item > a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
 .trip-item-main {
   display: flex;
   align-items: center;
