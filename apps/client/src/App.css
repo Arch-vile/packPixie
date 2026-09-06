@@ -235,6 +235,12 @@ body {
   background: #fff;
 }
 
+.trip-item > a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
 .trip-item-main {
   display: flex;
   align-items: center;
@@ -253,4 +259,110 @@ body {
 .trip-participants {
   font-size: 0.8rem;
   color: #666;
+}
+
+/* Item table */
+.item-table-container {
+  max-width: 900px;
+  margin: 1.5rem auto;
+  text-align: left;
+  color: #213547;
+}
+
+.item-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+}
+
+.item-table th {
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  color: #444;
+  padding: 8px;
+  background: #fafafa;
+  border-bottom: 1px solid #ddd;
+}
+
+.item-row td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+  font-size: 16px;
+}
+
+.item-row input[type='text'],
+.item-row input[type='number'],
+.item-row select {
+  font-size: 16px;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #213547;
+  box-sizing: border-box;
+}
+
+.cell-name input {
+  width: 160px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.cell-quantity input {
+  width: 64px;
+}
+
+.cell-weight input {
+  width: 80px;
+}
+
+.cell-category input {
+  width: 160px;
+  max-width: 100%;
+}
+
+.cell-packed-by select,
+.cell-status select {
+  max-width: 100%;
+}
+
+.cell-invalid {
+  outline: 2px solid #cc0000;
+  outline-offset: -1px;
+}
+
+.item-row-error td {
+  padding: 8px 8px 16px;
+  border-bottom: 1px solid #ddd;
+}
+
+.item-row-error .error-message {
+  margin-bottom: 8px;
+}
+
+.item-table-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.btn-destructive {
+  padding: 0.4rem 1rem;
+  background: #fff;
+  color: #cc0000 !important;
+  border: 1px solid #cc0000;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-destructive:hover:not(:disabled) {
+  background: #fdf0f0;
+}
+
+.btn-destructive:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

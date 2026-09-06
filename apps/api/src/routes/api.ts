@@ -1,15 +1,21 @@
 import {
   DynamoDBDocumentClient,
   QueryCommand,
-  PutCommand,
   TransactWriteCommand,
   BatchWriteCommand,
+  PutCommand,
+  UpdateCommand,
+  DeleteCommand,
 } from '@aws-sdk/lib-dynamodb';
 import {
   StatusResponse,
   CreateTripRequest,
   CreateTripResponse,
   GetTripsResponse,
+  TripDetailResponse,
+  Item,
+  CreateItemRequest,
+  PatchItemRequest,
 } from '@packpixie/model';
 import { FastifyInstance } from 'fastify';
 import { dirname, join } from 'path';
@@ -17,6 +23,16 @@ import { fileURLToPath } from 'url';
 import { Config } from '../config.js';
 import { authPlugin } from '../plugins/auth.js';
 import { checkDynamoDBConnection } from '../lib/dynamodb.js';
+import {
+  mapItemRecord,
+  buildCreateItemAttributes,
+  isTripMember,
+  extractParticipantEmails,
+  findItemRecord,
+  computeItemPatch,
+  buildUpdateExpression,
+  assertItemDeletable,
+} from '../lib/tripDetail.js';
 import { readFileSync } from 'fs';
 import { randomUUID } from 'crypto';
 
@@ -63,52 +79,6 @@ export function apiRoutes(
         fastify.register(async function (protected_) {
           await protected_.register(authPlugin(conf));
 
-          protected_.get('/comments', async (_request, _reply) => {
-            const result = await dynamoDBClient.send(
-              new QueryCommand({
-                TableName: conf.dynamoDBTable,
-                KeyConditionExpression: 'PK = :pk',
-                ExpressionAttributeValues: { ':pk': 'COMMENTS' },
-                ScanIndexForward: false,
-              }),
-            );
-
-            const comments = (result.Items ?? []).map((item) => ({
-              id: item.SK as string,
-              text: item.text as string,
-              createdAt: item.createdAt as string,
-            }));
-
-            return { comments };
-          });
-
-          protected_.post('/comments', async (request, reply) => {
-            const body = request.body as { text?: string };
-            const text = body?.text?.trim();
-
-            if (!text) {
-              return reply.status(400).send({ error: 'text is required' });
-            }
-
-            const now = new Date().toISOString();
-            const id = randomUUID();
-            const sk = `${now}#${id}`;
-
-            await dynamoDBClient.send(
-              new PutCommand({
-                TableName: conf.dynamoDBTable,
-                Item: {
-                  PK: 'COMMENTS',
-                  SK: sk,
-                  text,
-                  createdAt: now,
-                },
-              }),
-            );
-
-            return reply.status(201).send({ id: sk, text, createdAt: now });
-          });
-
           // Trip routes
           protected_.post<{ Body: CreateTripRequest }>(
             '/trips',
@@ -116,7 +86,7 @@ export function apiRoutes(
               const { tripName, participantEmails } = request.body;
               const userEmail = request.user.email;
 
-              if (!tripName?.trim()) {
+              if (typeof tripName !== 'string' || !tripName.trim()) {
                 return reply
                   .status(400)
                   .send({ error: 'tripName is required' }) as never;
@@ -161,10 +131,18 @@ export function apiRoutes(
                 }),
               );
 
-              // Write invited participants in chunks of 25 (BatchWrite limit)
-              const validEmails = (participantEmails ?? [])
-                .map((e) => e.trim().toLowerCase())
-                .filter((e) => e.length > 0 && e !== creatorEmail);
+              // Write invited participants in chunks of 25 (BatchWrite limit).
+              // De-duplicate after normalization — BatchWriteItem rejects a
+              // batch containing duplicate keys with a ValidationException,
+              // which two emails that normalize to the same address would
+              // trigger otherwise (CR-05).
+              const validEmails = [
+                ...new Set(
+                  (participantEmails ?? [])
+                    .map((e) => e.trim().toLowerCase())
+                    .filter((e) => e.length > 0 && e !== creatorEmail),
+                ),
+              ];
 
               for (let i = 0; i < validEmails.length; i += 25) {
                 const chunk = validEmails.slice(i, i + 25);
@@ -246,6 +224,326 @@ export function apiRoutes(
               );
 
               return { trips };
+            },
+          );
+
+          protected_.get<{ Params: { tripId: string } }>(
+            '/trips/:tripId',
+            async (request, reply): Promise<TripDetailResponse> => {
+              const { tripId } = request.params;
+              // Identity comes only from the verified JWT, never the path param
+              // or body. Lowercase to match the write-path USER# key normalization.
+              const callerEmail = request.user.email.trim().toLowerCase();
+
+              const result = await dynamoDBClient.send(
+                new QueryCommand({
+                  TableName: conf.dynamoDBTable,
+                  KeyConditionExpression: 'PK = :pk',
+                  ExpressionAttributeValues: {
+                    ':pk': `TRIP#${tripId}`,
+                  },
+                }),
+              );
+
+              const records = result.Items ?? [];
+
+              // Participation guard (enumeration-resistant): a single branch
+              // serves both failure modes — non-existent trip (zero records) and
+              // foreign trip (records but no matching USER#). Both yield an
+              // identical 404; never a 403, never a distinguishable response.
+              const isMember = records.some(
+                (r) => (r.SK as string) === `USER#${callerEmail}`,
+              );
+              if (!isMember) {
+                return reply
+                  .status(404)
+                  .send({ error: 'Trip not found' }) as never;
+              }
+
+              const meta = records.find((r) =>
+                (r.SK as string).startsWith('META#'),
+              );
+              const participants = records
+                .filter((r) => (r.SK as string).startsWith('USER#'))
+                .map((r) => r.Email as string)
+                .filter(Boolean);
+              const items = records
+                .filter((r) => (r.SK as string).startsWith('ITEM#'))
+                .map(mapItemRecord);
+
+              return {
+                tripId,
+                tripName: (meta?.TripName as string) ?? '',
+                participants,
+                items,
+              };
+            },
+          );
+
+          protected_.post<{
+            Params: { tripId: string };
+            Body: CreateItemRequest;
+          }>(
+            '/trips/:tripId/items',
+            async (request, reply): Promise<Item> => {
+              const { tripId } = request.params;
+              const callerEmail = request.user.email.trim().toLowerCase();
+
+              const result = await dynamoDBClient.send(
+                new QueryCommand({
+                  TableName: conf.dynamoDBTable,
+                  KeyConditionExpression: 'PK = :pk',
+                  ExpressionAttributeValues: {
+                    ':pk': `TRIP#${tripId}`,
+                  },
+                }),
+              );
+
+              const records = result.Items ?? [];
+
+              if (!isTripMember(records, callerEmail)) {
+                return reply
+                  .status(404)
+                  .send({ error: 'Trip not found' }) as never;
+              }
+
+              const participantEmails = extractParticipantEmails(records);
+              const itemId = randomUUID();
+              const now = new Date().toISOString();
+
+              const attrsResult = buildCreateItemAttributes({
+                tripId,
+                itemId,
+                now,
+                body: request.body,
+                participantEmails,
+              });
+
+              if (!attrsResult.ok) {
+                return reply
+                  .status(400)
+                  .send({ error: attrsResult.error }) as never;
+              }
+
+              await dynamoDBClient.send(
+                new PutCommand({
+                  TableName: conf.dynamoDBTable,
+                  Item: attrsResult.value,
+                }),
+              );
+
+              return reply.status(201).send(mapItemRecord(attrsResult.value));
+            },
+          );
+
+          protected_.patch<{
+            Params: { tripId: string; itemId: string };
+            Body: PatchItemRequest;
+          }>(
+            '/trips/:tripId/items/:itemId',
+            async (request, reply): Promise<Item> => {
+              const { tripId, itemId } = request.params;
+              const callerEmail = request.user.email.trim().toLowerCase();
+
+              const result = await dynamoDBClient.send(
+                new QueryCommand({
+                  TableName: conf.dynamoDBTable,
+                  KeyConditionExpression: 'PK = :pk',
+                  ExpressionAttributeValues: {
+                    ':pk': `TRIP#${tripId}`,
+                  },
+                }),
+              );
+
+              const records = result.Items ?? [];
+
+              if (!isTripMember(records, callerEmail)) {
+                return reply
+                  .status(404)
+                  .send({ error: 'Trip not found' }) as never;
+              }
+
+              const itemRecord = findItemRecord(records, itemId);
+              if (!itemRecord) {
+                return reply
+                  .status(404)
+                  .send({ error: 'Item not found' }) as never;
+              }
+
+              const participantEmails = extractParticipantEmails(records);
+              const patchResult = computeItemPatch(
+                itemRecord,
+                request.body as unknown as Record<string, unknown>,
+                participantEmails,
+              );
+
+              if (!patchResult.ok) {
+                return reply
+                  .status(400)
+                  .send({ error: patchResult.error }) as never;
+              }
+
+              const {
+                setAttrs,
+                removeAttrs,
+                requiresPackedByExists,
+                requiresStatusNotPacked,
+              } = patchResult.value;
+              const {
+                UpdateExpression,
+                ExpressionAttributeNames,
+                ExpressionAttributeValues,
+              } = buildUpdateExpression(setAttrs, removeAttrs);
+
+              // CR-04: the "packed requires packedBy" invariant was only
+              // checked against a stale, request-scoped read above. When
+              // this write sets Status to 'packed' without also writing
+              // PackedBy in the same request, re-assert PackedBy still
+              // exists atomically at write time so a concurrent request
+              // that cleared it cannot race this one into an invalid
+              // persisted state. Symmetrically, when this write clears
+              // PackedBy without touching Status (because the stale read
+              // saw a non-'packed' Status), re-assert Status is still not
+              // 'packed' at write time so a concurrent request that just
+              // set it cannot race this one into the same invalid state.
+              const conditionParts = ['attribute_exists(PK)'];
+              if (requiresPackedByExists) {
+                conditionParts.push('attribute_exists(PackedBy)');
+              }
+              if (requiresStatusNotPacked) {
+                conditionParts.push(
+                  '(attribute_not_exists(#status) OR #status <> :packed)',
+                );
+              }
+              const conditionExpression = conditionParts.join(' AND ');
+
+              const conditionNames = requiresStatusNotPacked
+                ? { ...ExpressionAttributeNames, '#status': 'Status' }
+                : ExpressionAttributeNames;
+              const conditionValues = requiresStatusNotPacked
+                ? { ...ExpressionAttributeValues, ':packed': 'packed' }
+                : ExpressionAttributeValues;
+
+              try {
+                const updateResult = await dynamoDBClient.send(
+                  new UpdateCommand({
+                    TableName: conf.dynamoDBTable,
+                    Key: {
+                      PK: `TRIP#${tripId}`,
+                      SK: `ITEM#${itemId}`,
+                    },
+                    UpdateExpression,
+                    ExpressionAttributeNames: conditionNames,
+                    ExpressionAttributeValues: Object.keys(conditionValues)
+                      .length
+                      ? conditionValues
+                      : undefined,
+                    ConditionExpression: conditionExpression,
+                    ReturnValues: 'ALL_NEW',
+                  }),
+                );
+
+                return reply
+                  .status(200)
+                  .send(
+                    mapItemRecord(
+                      updateResult.Attributes as Record<string, unknown>,
+                    ),
+                  );
+              } catch (error) {
+                if (
+                  (error as { name?: string }).name ===
+                  'ConditionalCheckFailedException'
+                ) {
+                  if (requiresPackedByExists || requiresStatusNotPacked) {
+                    return reply
+                      .status(409)
+                      .send({
+                        error:
+                          'Item was modified concurrently — refresh and retry',
+                      }) as never;
+                  }
+                  return reply
+                    .status(404)
+                    .send({ error: 'Item not found' }) as never;
+                }
+                throw error;
+              }
+            },
+          );
+
+          protected_.delete<{
+            Params: { tripId: string; itemId: string };
+          }>(
+            '/trips/:tripId/items/:itemId',
+            async (request, reply): Promise<void> => {
+              const { tripId, itemId } = request.params;
+              const callerEmail = request.user.email.trim().toLowerCase();
+
+              const result = await dynamoDBClient.send(
+                new QueryCommand({
+                  TableName: conf.dynamoDBTable,
+                  KeyConditionExpression: 'PK = :pk',
+                  ExpressionAttributeValues: {
+                    ':pk': `TRIP#${tripId}`,
+                  },
+                }),
+              );
+
+              const records = result.Items ?? [];
+
+              if (!isTripMember(records, callerEmail)) {
+                return reply
+                  .status(404)
+                  .send({ error: 'Trip not found' }) as never;
+              }
+
+              const itemRecord = findItemRecord(records, itemId);
+              if (!itemRecord) {
+                return reply
+                  .status(404)
+                  .send({ error: 'Item not found' }) as never;
+              }
+
+              const deleteError = assertItemDeletable(itemRecord);
+              if (deleteError) {
+                return reply
+                  .status(400)
+                  .send({ error: deleteError }) as never;
+              }
+
+              try {
+                await dynamoDBClient.send(
+                  new DeleteCommand({
+                    TableName: conf.dynamoDBTable,
+                    Key: {
+                      PK: `TRIP#${tripId}`,
+                      SK: `ITEM#${itemId}`,
+                    },
+                    // Re-check the "not packed" invariant atomically against
+                    // the write itself, closing the TOCTOU window between the
+                    // Query above and this Delete (CR-03).
+                    ConditionExpression:
+                      'attribute_exists(PK) AND (attribute_not_exists(#status) OR #status <> :packed)',
+                    ExpressionAttributeNames: { '#status': 'Status' },
+                    ExpressionAttributeValues: { ':packed': 'packed' },
+                  }),
+                );
+              } catch (error) {
+                if (
+                  (error as { name?: string }).name ===
+                  'ConditionalCheckFailedException'
+                ) {
+                  return reply
+                    .status(409)
+                    .send({
+                      error: 'Item was modified or is packed — refresh and retry',
+                    }) as never;
+                }
+                throw error;
+              }
+
+              return reply.status(204).send();
             },
           );
         });

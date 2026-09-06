@@ -158,3 +158,8 @@ infra/placeholder.zip
 /.github/copilot-instructions.md
 /.claude/gsd-core/
 /AGENTS.md
+
+# GSD runtime state (ephemeral bookkeeping, regenerated automatically — not
+# planning content, not meant to be committed).
+/.gsd/
+/.planning/.gsd-allow-shrink
