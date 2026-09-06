@@ -147,6 +147,13 @@ None - no external service configuration required.
 - Routing and trip-detail fetch scaffolding is in place; Plan 08-02 can build the full inline-edit `ItemTable` on top of `TripDetail.tsx`, replacing the tracer's read-only `<ul>` with the real table (Name, Quantity, Weight, PackedBy, Status, Category, Consumable) and wiring `TripDetailProps.userEmail` into new-row `PackedBy` defaults.
 - No blockers. Manual UAT (Task 2's human-check) for TRIP-01 has not yet been run interactively in this dispatch — the checkpoint that would normally gate this was the package-legitimacy checkpoint (Task 1), already approved; the tracer's own end-to-end human-check should be exercised as part of Phase 8's overall `/gsd-verify-work` pass, consistent with how Phase 6/7 were verified.
 
+## Self-Check: PASSED
+
+- FOUND: apps/client/src/TripDetail.tsx
+- FOUND: .planning/phases/08-trip-detail-inline-edit-table-ui/08-01-SUMMARY.md
+- FOUND: fa009be (Task 2 commit)
+- FOUND: 2248522 (SUMMARY commit)
+
 ---
 *Phase: 08-trip-detail-inline-edit-table-ui*
 *Completed: 2026-09-06*
