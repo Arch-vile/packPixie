@@ -347,3 +347,22 @@ body {
   gap: 16px;
   margin-top: 24px;
 }
+
+.btn-destructive {
+  padding: 0.4rem 1rem;
+  background: #fff;
+  color: #cc0000 !important;
+  border: 1px solid #cc0000;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-destructive:hover:not(:disabled) {
+  background: #fdf0f0;
+}
+
+.btn-destructive:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

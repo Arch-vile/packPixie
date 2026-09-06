@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Item, ItemStatus, PatchItemRequest } from '@packpixie/model';
-import { ConflictError, createItem, patchItem } from './api/api';
+import { ConflictError, createItem, deleteItem, patchItem } from './api/api';
 
 interface ItemTableProps {
   tripId: string;
@@ -113,6 +113,31 @@ export function ItemTable({
     onRefresh();
   }
 
+  async function handleDeleteItem(item: Item) {
+    const confirmed = window.confirm(
+      `Delete "${item.name}"? This can't be undone.`,
+    );
+    if (!confirmed) return;
+
+    try {
+      // deleteItem resolves normally for both a genuine successful delete and
+      // a 404 (item already gone — another participant's delete, or a rapid
+      // double-click sent two requests). Both are idempotent no-ops from the
+      // UI's perspective: the row simply disappears, never a spurious error
+      // (ITEM-03/idempotency).
+      await deleteItem(tripId, item.itemId);
+      const updated = itemsRef.current.filter((i) => i.itemId !== item.itemId);
+      itemsRef.current = updated;
+      onItemsChange(updated);
+      setRowError(item.itemId, null);
+    } catch {
+      setRowError(item.itemId, {
+        message: 'Failed to save changes. Please try again.',
+        conflict: false,
+      });
+    }
+  }
+
   async function handleAddItem() {
     if (adding) return;
     setAdding(true);
@@ -162,6 +187,7 @@ export function ItemTable({
                 onFieldChange={handleFieldChange}
                 onNameValidityChange={setNameInvalid}
                 onRefreshRow={handleRefreshRow}
+                onDelete={handleDeleteItem}
               />
             ))}
           </tbody>
@@ -190,6 +216,7 @@ interface ItemRowProps {
   ) => void;
   onNameValidityChange: (itemId: string, invalid: boolean) => void;
   onRefreshRow: (itemId: string) => void;
+  onDelete: (item: Item) => void;
 }
 
 function ItemRow({
@@ -200,6 +227,7 @@ function ItemRow({
   onFieldChange,
   onNameValidityChange,
   onRefreshRow,
+  onDelete,
 }: ItemRowProps) {
   // Local "draft" state for text/number fields decouples what's on-screen
   // while typing from the committed `item` value (which only updates once a
@@ -334,7 +362,21 @@ function ItemRow({
             onChange={handleConsumableChange}
           />
         </td>
-        <td className="cell-delete">{/* Delete control wired in Task 3 */}</td>
+        <td className="cell-delete">
+          <button
+            type="button"
+            className="btn-destructive"
+            onClick={() => onDelete(item)}
+            disabled={item.status === 'packed'}
+            title={
+              item.status === 'packed'
+                ? 'Unpack item before deleting'
+                : undefined
+            }
+          >
+            Delete
+          </button>
+        </td>
       </tr>
       {rowError && (
         <tr className="item-row-error">
