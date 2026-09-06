@@ -92,7 +92,12 @@ Full detail: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
   3. A participant can inline-edit any field of any row (Name, Quantity, Weight, PackedBy, Status, Category, Consumable) and the change persists.
   4. A participant can delete a row after confirming a delete dialog (hard delete, no undo).
 
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Wire client-side routing (`react-router-dom`) + trip-detail read, end-to-end tracer (TRIP-01)
+- [ ] 08-02-PLAN.md — Full inline-edit item table: add-row, per-field auto-save, delete with confirmation (ITEM-01, ITEM-02, ITEM-03)
+
 **UI hint**: yes
 
 ### Phase 9: Packing View Filters
@@ -133,6 +138,6 @@ Phases execute in numeric order: 5 → 6 → 7 → 8 → 9 → 10
 | 5. Shared Item Model & Comments Cleanup | v2.0 | 1/1 | Complete    | 2026-08-12 |
 | 6. Trip-Detail Read API & Participation Guard | v2.0 | 2/2 | In Progress|  |
 | 7. Item Write API & Server-Authoritative Rules | v2.0 | 1/1 | Complete    | 2026-09-05 |
-| 8. Trip-Detail Inline-Edit Table (UI) | v2.0 | 0/TBD | Not started | - |
+| 8. Trip-Detail Inline-Edit Table (UI) | v2.0 | 0/2 | Not started | - |
 | 9. Packing View Filters | v2.0 | 0/TBD | Not started | - |
 | 10. E2E Item-Table Coverage | v2.0 | 0/TBD | Not started | - |
