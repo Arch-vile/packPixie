@@ -95,7 +95,12 @@ Full detail: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 **Plans**: 2 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 08-01-PLAN.md — Wire client-side routing (`react-router-dom`) + trip-detail read, end-to-end tracer (TRIP-01)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 08-02-PLAN.md — Full inline-edit item table: add-row, per-field auto-save, delete with confirmation (ITEM-01, ITEM-02, ITEM-03)
 
 **UI hint**: yes

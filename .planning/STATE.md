@@ -4,15 +4,15 @@ milestone: v2.0
 milestone_name: Packing Table MVP
 current_phase: 8
 current_phase_name: Trip-Detail Inline-Edit Table (UI)
-status: planning
-stopped_at: Phase 8 context gathered
-last_updated: "2026-09-06T06:57:39.934Z"
+status: executing
+stopped_at: Phase 08 UI-SPEC approved
+last_updated: "2026-09-06T11:32:21.152Z"
 last_activity: 2026-09-05
 last_activity_desc: Phase 07 complete, transitioned to Phase 8
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 4
+  total_plans: 6
   completed_plans: 4
   percent: 50
 ---
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-05)
 
 Phase: 8 — Trip-Detail Inline-Edit Table (UI)
 Plan: Not started
-Status: Ready to plan
+Status: Ready to execute
 Last activity: 2026-09-05 — Phase 07 complete, transitioned to Phase 8
 
 Progress: [░░░░░░░░░░] 0%
@@ -94,6 +94,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-09-06T06:57:39.926Z
-Stopped at: Phase 8 context gathered
-Resume file: /Users/mikko.ravimo/git/personal/packPixie/.planning/phases/08-trip-detail-inline-edit-table-ui/08-CONTEXT.md
+Last session: 2026-09-06T10:43:16.057Z
+Stopped at: Phase 08 UI-SPEC approved
+Resume file: /Users/mikko.ravimo/git/personal/packPixie/.planning/phases/08-trip-detail-inline-edit-table-ui/08-UI-SPEC.md
