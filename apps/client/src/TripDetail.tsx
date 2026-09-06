@@ -1,34 +1,47 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { TripDetailResponse } from '@packpixie/model';
 import { getTripDetail } from './api/api';
+import { ItemTable } from './ItemTable';
 
 interface TripDetailProps {
   userEmail: string;
 }
 
-// userEmail is unused by this tracer slice; Plan 08-02's ItemTable consumes it (e.g. new-item
-// PackedBy default). Kept on the props contract now so App.tsx's call site doesn't change again.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function TripDetail({ userEmail: _userEmail }: TripDetailProps) {
+export function TripDetail({ userEmail }: TripDetailProps) {
   const { tripId } = useParams<{ tripId: string }>();
   const [trip, setTrip] = useState<TripDetailResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  // Extracted so both the mount effect and ItemTable's onRefresh (409-conflict
+  // recovery) share one implementation of the trip-detail fetch.
+  const fetchTrip = useCallback(() => {
     if (!tripId) return;
 
     setLoading(true);
     setError(null);
 
-    getTripDetail(tripId)
+    return getTripDetail(tripId)
       .then((data) => setTrip(data))
       .catch((err) => {
         setError(err instanceof Error ? err.message : 'Trip not found.');
       })
       .finally(() => setLoading(false));
   }, [tripId]);
+
+  useEffect(() => {
+    fetchTrip();
+  }, [fetchTrip]);
+
+  if (!tripId) {
+    return (
+      <>
+        <p>Trip not found.</p>
+        <Link to="/">Back to my trips</Link>
+      </>
+    );
+  }
 
   if (loading) {
     return <p>Loading trip…</p>;
@@ -43,12 +56,25 @@ export function TripDetail({ userEmail: _userEmail }: TripDetailProps) {
     );
   }
 
+  if (!trip) {
+    return null;
+  }
+
   return (
     <>
-      <h2>{trip?.tripName}</h2>
-      <ul>
-        {trip?.items.map((item) => <li key={item.itemId}>{item.name}</li>)}
-      </ul>
+      <h2>{trip.tripName}</h2>
+      <ItemTable
+        tripId={tripId}
+        userEmail={userEmail}
+        items={trip.items}
+        participants={trip.participants}
+        onItemsChange={(items) =>
+          setTrip((prev) => (prev ? { ...prev, items } : prev))
+        }
+        onRefresh={() => {
+          fetchTrip();
+        }}
+      />
     </>
   );
 }
